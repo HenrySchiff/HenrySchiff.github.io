@@ -12,16 +12,42 @@
         color: rgb(1, 224, 57);
         font-family:Arial, Helvetica, sans-serif;
     }
+    ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #333;
+    }
+
+    li {
+        float: left;
+    }
+
+    li a {
+        display: block;
+        color: white;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+    }
+
+    li a:hover {
+        background-color: #111;
+    }
 </style>
 <html>
     <body style="background-color:rgb(42,38,63)">
         <center>
+            <ul>
+                <li><a href="./home.html">Home</a></li>
+                <li><a href="./index.html">Ball Game</a></li>
+            </ul>
             <h1>HENRY'S DOMAIN</h1>
-            <br><br><br><br><br><br>
+            <br><br><br><br>
             <h1>Click the ball.</h1>
             <style>canvas { border: 5px solid rgb(166,77,69); }</style>
             <canvas width="600" height="600" id="canvas"></canvas>
-            <p><a href="./home.html">home</a></p>
         </center>
         <script src="verlet.js"></script>
     </body>
