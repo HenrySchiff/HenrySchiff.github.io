@@ -46,12 +46,13 @@ function listToString(list) {
 const particles = [];
 
 class Particle {
-    constructor(x, y, fixed){
+    constructor(x, y, fixed, weight){
         particles.push(this);
         this.x = x;
         this.y = y;
         this.ox = x; this.oy = y;
 
+        this.weight = weight
         this.fixed = fixed;
         this.radius = 5;
         this.colors = ['black'];
@@ -156,7 +157,7 @@ function updateParticles() {
             p.oy = p.y;
             p.x += vx;
             p.y += vy;
-            p.y += gravity;
+            p.y += gravity * p.weight;
 
         }
     }
@@ -196,7 +197,7 @@ const segments = 15;
 const divisions = length / segments;
 
 for (let i = 0; i < segments; i++) {
-    new Particle(200, i * divisions, false);
+    new Particle(200, i * divisions, false, 1);
 }
 
 for (let i = 0; i < particles.length - 1; i++) {
@@ -205,7 +206,7 @@ for (let i = 0; i < particles.length - 1; i++) {
 
 rope = particles[0]; ball = particles[particles.length - 1];
 rope.color = 'red'; rope.fixed = true;
-ball.radius = 20; ball.colors = colors; 
+ball.radius = 20; ball.colors = colors; ball.weight = 1.5; 
 
 
 const keys = [];
