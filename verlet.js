@@ -66,6 +66,23 @@ class Particle {
         ctx.fillStyle = listToString(this.colors[this.colorIndex]);
         ctx.fill();
     }
+
+    drawText() {
+        var xText = 275;
+        if (score > 9) {
+            xText -= 30;
+        }
+        if (score > 99) {
+            xText -= 30;
+        }
+        var lowerAlpha = [...this.colors[this.colorIndex]];
+        lowerAlpha[3] -= 0.5;
+        ctx.font = '100px arial';
+        // ctx.strokeStyle = listToString(lowerAlpha);
+        // ctx.strokeText(score, 300, 300);
+        ctx.fillStyle = listToString(lowerAlpha);
+        ctx.fillText(score, xText, 325);
+    }
 }
 
 
@@ -222,6 +239,7 @@ document.addEventListener('keydown', (event) => {
         ball.colorIndex += 1;
         ball.colorIndex %= ball.colors.length;
         new Ripple(ball.x, ball.y, ball, ball.colors[ball.colorIndex], 2)
+        score += 1
     }
 
     console.log(keys);
@@ -260,6 +278,7 @@ document.addEventListener('mousemove', (event) => {
     mouse_pos = pos;
 })
 
+var score = 0;
 
 document.addEventListener('mousedown', (event) => {
     const distance = getDistance(mouse_pos, ball);
@@ -267,6 +286,7 @@ document.addEventListener('mousedown', (event) => {
         ball.colorIndex += 1;
         ball.colorIndex %= ball.colors.length;
         new Ripple(ball.x, ball.y, ball, ball.colors[ball.colorIndex], 2)
+        score += 1;
     }
     console.log(distance);
 })
@@ -279,6 +299,8 @@ function drawWindow() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    ball.drawText()
+
     for (var i = 0; i < lines.length; i++) {
         lines[i].draw();
     }
@@ -286,7 +308,6 @@ function drawWindow() {
     for (let i = 0; i < ripples.length; i++) {
         ripples[i].draw();
     }
-
 
 
     // for (var i = 0; i < particles.length; i++) {
