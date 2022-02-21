@@ -117,6 +117,7 @@ class Ripple {
         this.x = x;
         this.y = y;
         this.source = particle
+        this.originalColor = [...color]
         this.color = [...color];
         this.children = children;
 
@@ -126,21 +127,21 @@ class Ripple {
     }
 
     tick() {
-        this.radius += 15;
+        this.radius += 6;
         // this.x = this.source.x; this.y = this.source.y;
         if (this.radius > this.maxRadius) {
             ripples.splice(ripples.indexOf(this), 1);
         }
 
 
-        this.color[this.color.length - 1] -= 0.02;
+        this.color[3] -= 0.04;
 
 
         if (this.delay > 0 ) {
             this.delay -= 1;
         } else {
             if (this.children > 0) {
-                new Ripple(this.source.x, this.source.y, this.source, this.color, 0);
+                new Ripple(this.source.x, this.source.y, this.source, this.originalColor, 0);
                 this.children -= 1;
                 this.delay = 10;
             }
