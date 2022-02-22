@@ -14,7 +14,6 @@ h2 {
 }
 a:link {
     color: #f29545;
-    font-family:Arial, Helvetica, sans-serif;
     font-weight: bold;
     font-family:'Alegreya Sans SC';
     font-size: 20px;
@@ -22,7 +21,6 @@ a:link {
 }
 a:visited {
     color: #f29545;
-    font-family:Arial, Helvetica, sans-serif;
     font-weight: bold;
     font-family:'Alegreya Sans SC';
     font-size: 20px;
@@ -35,11 +33,9 @@ ul {
     overflow: hidden;
     background-color: #1a1625;
 }
-
 li {
     float: left;
 }
-
 li a {
     display: block;
     color: white;
@@ -47,7 +43,10 @@ li a {
     padding: 14px 16px;
     text-decoration: none;
 }
-
 li a:hover {
     background-color: #000000;
+}
+label {
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
 }
