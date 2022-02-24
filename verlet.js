@@ -262,10 +262,11 @@ document.addEventListener('keyup', (event) => {
 
 
 function getMousePos(canvas, evt) {
+    var border = 5
     var rect = canvas.getBoundingClientRect();
     return {
-      x: evt.clientX - rect.left,
-      y: evt.clientY - rect.top
+      x: evt.clientX - rect.left - border,
+      y: evt.clientY - rect.top - border
     };
 }
 
