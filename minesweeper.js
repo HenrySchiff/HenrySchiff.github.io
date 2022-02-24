@@ -20,6 +20,7 @@ class Square {
         this.y = y;
         this.localNeighbors = undefined
         
+        this.bomb = false
         this.color = 'gray'
     }
     
@@ -43,12 +44,19 @@ class Square {
     	ctx.beginPath()
         ctx.rect(this.x, this.y, unit, unit)
         ctx.stroke()
+
+        if (this.bomb) {
+            ctx.strokeStyle = 'black'
+            ctx.beginPath();
+            ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 3, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
     }
 }
 
 
 class Grid {
-	constructor (width, height) {
+	constructor (width, height, bombDensity) {
     	this.width = width
         this.height = height
         console.log(width)
@@ -60,6 +68,8 @@ class Grid {
         }
         
         Object.values(allSquares).forEach(item => item.findNeighbors())
+
+        this.shuffleBombs(bombDensity)
     }
 
     mouseToSquare (mouse_pos) {
@@ -70,10 +80,36 @@ class Grid {
         }
         return
     }
+
+    shuffleBombs (bombDensity) {
+        var array = []
+        var shuffled = []
+        var squareCount = Object.values(allSquares).length
+        var bombCount = bombDensity * squareCount
+
+        for (var i = 0; i < squareCount; i ++) {
+            if (i <= bombCount) {
+                array.push(true)
+            } else {
+                array.push(false)
+            }
+        }
+
+        while (array.length > 0) {
+            var randomIndex = Math.floor(Math.random() * array.length)
+            shuffled.push(array[randomIndex])
+            array.splice(randomIndex, 1)
+        }
+
+        for (var i = 0; i < shuffled.length; i ++) {
+            Object.values(allSquares)[i].bomb = shuffled[i]
+        }
+
+    }
 }
 
 
-const grid = new Grid(30, 30);
+const grid = new Grid(30, 30, 0.25);
 
 
 document.addEventListener('mousedown', (event) => {
