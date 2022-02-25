@@ -11,17 +11,18 @@ const neighbors = [
 
 
 const allSquares = new Object();
-console.log(allSquares);
 
 class Square {
 	constructor(x, y) {
     	allSquares[[x, y]] = this;
     	this.x = x;
         this.y = y;
-        this.localNeighbors = undefined
         
+        this.localNeighbors = undefined
+        this.number = undefined
         this.bomb = false
-        this.color = 'gray'
+        this.revealed = false
+        this.color = 'darkGray'
     }
     
     findNeighbors() {
@@ -33,24 +34,72 @@ class Square {
             if (Object.keys(allSquares).includes(index)) {
                 localNeighbors.push(allSquares[index])
         	}   
+        }
+            
+        var count = 0
+        for (var i = 0; i < localNeighbors.length; i ++) {
+            var neighbor = localNeighbors[i]
+            if (neighbor.bomb) {
+                count += 1
+            }
+        }
 
         this.localNeighbors = localNeighbors;
-        }
+        this.number = count;
     }
     
-    draw(ctx) {
-        ctx.fillStyle = this.color
-        ctx.fillRect(this.x, this.y, unit, unit)
-    	ctx.beginPath()
-        ctx.rect(this.x, this.y, unit, unit)
-        ctx.stroke()
-
-        if (this.bomb) {
-            ctx.strokeStyle = 'black'
-            ctx.beginPath();
-            ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 3, 0, 2 * Math.PI);
-            ctx.stroke();
+    
+    caving() {
+    	var queue = [this]
+        
+        var count = 0
+        while (queue.length > 0) {
+        	console.log(queue.length)
+        	var current = queue[0]
+            if (current.number == 0) {
+            	var nb = current.localNeighbors
+            	for (var i = 0; i < nb.length; i ++) {
+                	if (!nb[i].revealed && !queue.includes(nb[i])) {
+                    	queue.push(nb[i])
+                    }
+                }
+            }
+            
+            current.revealed = true
+           	queue.splice(0, 1)
+            count += 1
+            
         }
+        
+    }
+    
+    
+    draw(ctx) {
+        /* ctx.fillStyle = this.color
+        ctx.fillRect(this.x, this.y, unit, unit)
+        ctx.beginPath() */
+
+		if (this.revealed) {
+            if (this.bomb) {
+                ctx.strokeStyle = 'black'
+                ctx.beginPath();
+                ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 3, 0, 2 * Math.PI);
+                ctx.stroke();
+            } else if (this.number > 0) {
+                ctx.font = '15px arial'
+                ctx.fillStyle = 'black'
+                ctx.fillText(this.number, this.x + 5, this.y + 15)
+                }
+        } else {
+        	ctx.fillStyle = this.color
+            ctx.fillRect(this.x, this.y, unit, unit)
+            ctx.beginPath()
+        }
+        
+        ctx.rect(this.x, this.y, unit, unit)
+        ctx.lineWidth = 0.5
+        ctx.strokeStyle = 'black'
+        ctx.stroke()
     }
 }
 
@@ -59,7 +108,6 @@ class Grid {
 	constructor (width, height, bombDensity) {
     	this.width = width
         this.height = height
-        console.log(width)
         
         for (var x = 0; x < width; x ++) {
         	for (var y = 0; y < height; y ++) {
@@ -67,9 +115,9 @@ class Grid {
             }
         }
         
-        Object.values(allSquares).forEach(item => item.findNeighbors())
-
         this.shuffleBombs(bombDensity)
+        
+        Object.values(allSquares).forEach(item => item.findNeighbors())
     }
 
     mouseToSquare (mouse_pos) {
@@ -109,19 +157,21 @@ class Grid {
 }
 
 
-const grid = new Grid(30, 30, 0.25);
+const grid = new Grid(30, 30, 0.05);
 
 
 document.addEventListener('mousedown', (event) => {
     var mouse_pos = getMousePos(canvas, event)
     var square = grid.mouseToSquare(mouse_pos)
-    console.log(mouse_pos)
-
-    // if (typeof(square) != 'undefined') {
-    //     square.color = 'red'
-    //     square.localNeighbors.forEach(nb => nb.color = 'yellow')
-    //     console.log(square.localNeighbors)
-    // }
+    
+    if (square.bomb) {
+    	alert('you suck')
+    } else if (square.number == 0) {
+    	square.caving()
+    } else {
+    	square.revealed = true
+    }
+   
 })
 
 
@@ -137,6 +187,8 @@ function getMousePos(canvas, evt) {
 
 
 function drawWindow(ctx) {
+	ctx.fillStyle = 'gray';
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     Object.values(allSquares).forEach(item =>
         item.draw(ctx))
