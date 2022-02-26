@@ -12,6 +12,8 @@ const neighbors = [
 
 const allSquares = new Object();
 
+const colors = ['blue', 'green', 'red', 'darkBlue', 'maroon', 'turquoise', 'black', 'darkgray']
+
 class Square {
 	constructor(x, y) {
     	allSquares[[x, y]] = this;
@@ -22,7 +24,7 @@ class Square {
         this.number = undefined
         this.bomb = false
         this.revealed = false
-        this.color = 'darkGray'
+        this.flagged = false
     }
     
     findNeighbors() {
@@ -52,9 +54,7 @@ class Square {
     caving() {
     	var queue = [this]
         
-        var count = 0
         while (queue.length > 0) {
-        	console.log(queue.length)
         	var current = queue[0]
             if (current.number == 0) {
             	var nb = current.localNeighbors
@@ -67,7 +67,6 @@ class Square {
             
             current.revealed = true
            	queue.splice(0, 1)
-            count += 1
             
         }
         
@@ -81,26 +80,41 @@ class Square {
 
 		if (this.revealed) {
             if (this.bomb) {
-                ctx.strokeStyle = 'black'
-                ctx.beginPath();
-                ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 3, 0, 2 * Math.PI);
-                ctx.stroke();
-            } else if (this.number > 0) {
-                ctx.font = '15px arial'
                 ctx.fillStyle = 'black'
-                ctx.fillText(this.number, this.x + 5, this.y + 15)
-                }
+                ctx.beginPath();
+                ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 4, 0, 2 * Math.PI);
+                ctx.fill();
+            } else if (this.number > 0) {
+                ctx.font = 'bold 14px arial'
+                ctx.fillStyle = colors[this.number - 1]
+                ctx.fillText(this.number, this.x + 6, this.y + 15)
+            }
+
+            ctx.rect(this.x, this.y, unit, unit)
+            ctx.lineWidth = 0.5
+            ctx.strokeStyle = 'dimgray'
+            ctx.stroke()
+
         } else {
-        	ctx.fillStyle = this.color
+            var border = 3
+        	ctx.fillStyle = 'gray'
             ctx.fillRect(this.x, this.y, unit, unit)
             ctx.beginPath()
+        	ctx.fillStyle = 'gainsboro'
+            ctx.fillRect(this.x, this.y, unit - border, unit - border)
+            ctx.beginPath()
+        	ctx.fillStyle = 'darkgray'
+            ctx.fillRect(this.x + border, this.y + border, unit - border * 2, unit - border * 2)
+            ctx.beginPath()
+
+            if (this.flagged) {
+                ctx.fillStyle = 'red'
+                ctx.beginPath();
+                ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 4, 0, 2 * Math.PI);
+                ctx.fill();
+            }
         }
-        
-        ctx.rect(this.x, this.y, unit, unit)
-        ctx.lineWidth = 0.5
-        ctx.strokeStyle = 'black'
-        ctx.stroke()
-    }
+    } 
 }
 
 
@@ -154,26 +168,48 @@ class Grid {
         }
 
     }
+
+    gameOver() {
+        var allSquaresList = Object.values(allSquares)
+        for (let i = 0; i < Object.values(allSquares).length; i++) {
+            allSquaresList[i].revealed = true
+        }
+    }
 }
 
 
-const grid = new Grid(30, 30, 0.05);
+const grid = new Grid(35, 35, 0.10);
 
 
 document.addEventListener('mousedown', (event) => {
     var mouse_pos = getMousePos(canvas, event)
     var square = grid.mouseToSquare(mouse_pos)
     
-    if (square.bomb) {
-    	alert('you suck')
-    } else if (square.number == 0) {
-    	square.caving()
-    } else {
-    	square.revealed = true
+    if (square) {
+        if (event.which == 1 && !square.flagged) {
+            if (square.bomb) {
+                grid.gameOver()
+            } else if (square.number == 0) {
+                square.caving()
+            } else {
+                square.revealed = true
+            }
+        } else if (event.which == 3) {
+            square.flagged = !square.flagged
+        }
     }
-   
 })
 
+
+document.addEventListener('contextmenu', (event) => {
+    var mouse_pos = getMousePos(canvas, event)
+    
+    if (0 < mouse_pos.x && mouse_pos.x < canvas.width) {
+        if (0 < mouse_pos.y && mouse_pos.y < canvas.width) {
+            event.preventDefault()
+        }
+    }
+})
 
 
 function getMousePos(canvas, evt) {
@@ -187,7 +223,7 @@ function getMousePos(canvas, evt) {
 
 
 function drawWindow(ctx) {
-	ctx.fillStyle = 'gray';
+	ctx.fillStyle = 'darkgray';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     Object.values(allSquares).forEach(item =>
