@@ -154,31 +154,26 @@ class Grid {
         return
     }
 
+
     shuffleBombs (bombDensity) {
-        var array = []
-        var shuffled = []
-        var squareCount = Object.values(allSquares).length
-        var bombCount = bombDensity * squareCount
+        var bombCount = bombDensity * Object.values(allSquares).length
+        var pool = [...Object.keys(allSquares)]
+        var selected = []
 
-        for (var i = 0; i < squareCount; i ++) {
-            if (i <= bombCount) {
-                array.push(true)
-            } else {
-                array.push(false)
-            }
+        while (selected.length < bombCount) {
+            var randomIndex = Math.floor(Math.random() * pool.length)
+            selected.push(pool[randomIndex])
+            pool.splice(randomIndex, 1)
         }
 
-        while (array.length > 0) {
-            var randomIndex = Math.floor(Math.random() * array.length)
-            shuffled.push(array[randomIndex])
-            array.splice(randomIndex, 1)
-        }
-
-        for (var i = 0; i < shuffled.length; i ++) {
-            Object.values(allSquares)[i].bomb = shuffled[i]
-        }
-
+        var count = 0
+        selected.forEach(element => {
+            count += 1
+            allSquares[element].bomb = true
+        })
+        console.log(count)
     }
+
 
     gameOver() {
         for (let i = 0; i < unrevealedSquares.length; i++) {
@@ -187,6 +182,10 @@ class Grid {
     }
     
     reset() {
+        Object.values(allSquares).forEach(element => {
+            element.bomb = false
+        });
+
     	this.shuffleBombs(this.bombDensity)
     	unrevealedSquares = []
         for (var i = 0; i < Object.values(allSquares).length; i ++) {
