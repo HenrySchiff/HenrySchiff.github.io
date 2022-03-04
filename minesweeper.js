@@ -11,6 +11,7 @@ const neighbors = [
 
 
 const allSquares = new Object();
+var unrevealedSquares = []
 
 const colors = ['blue', 'green', 'red', 'darkBlue', 'maroon', 'turquoise', 'black', 'darkgray']
 
@@ -65,11 +66,18 @@ class Square {
                 }
             }
             
-            current.revealed = true
+            current.reveal()
            	queue.splice(0, 1)
             
         }
         
+    }
+    
+    
+    reveal() {
+    	this.revealed = true
+        var index = unrevealedSquares.indexOf(this)
+        unrevealedSquares.splice(index, 1)
     }
     
     
@@ -122,23 +130,26 @@ class Grid {
 	constructor (width, height, bombDensity) {
     	this.width = width
         this.height = height
+        this.bombDensity = bombDensity
         
         for (var x = 0; x < width; x ++) {
         	for (var y = 0; y < height; y ++) {
-            	new Square(x * unit, y * unit);
+            	var s = new Square(x * unit, y * unit);
+                unrevealedSquares.push(s);
             }
         }
         
         this.shuffleBombs(bombDensity)
         
         Object.values(allSquares).forEach(item => item.findNeighbors())
+        
     }
 
     mouseToSquare (mouse_pos) {
         var index = [mouse_pos.x - (mouse_pos.x % unit), mouse_pos.y - (mouse_pos.y % unit)].toString()
 
         if (Object.keys(allSquares).includes(index)) {
-            return allSquares[index]
+            return allSquares[index];
         }
         return
     }
@@ -170,9 +181,19 @@ class Grid {
     }
 
     gameOver() {
-        var allSquaresList = Object.values(allSquares)
-        for (let i = 0; i < Object.values(allSquares).length; i++) {
-            allSquaresList[i].revealed = true
+        for (let i = 0; i < unrevealedSquares.length; i++) {
+            unrevealedSquares[i].revealed = true
+        }
+    }
+    
+    reset() {
+    	this.shuffleBombs(this.bombDensity)
+    	unrevealedSquares = []
+        for (var i = 0; i < Object.values(allSquares).length; i ++) {
+            let s = Object.values(allSquares)[i]
+        	s.revealed = false
+            s.findNeighbors()
+            unrevealedSquares.push(s)
         }
     }
 }
@@ -188,11 +209,12 @@ document.addEventListener('mousedown', (event) => {
     if (square) {
         if (event.which == 1 && !square.flagged) {
             if (square.bomb) {
+                console.log('bomb')
                 grid.gameOver()
             } else if (square.number == 0) {
                 square.caving()
             } else {
-                square.revealed = true
+                square.reveal()
             }
         } else if (event.which == 3) {
             square.flagged = !square.flagged
@@ -208,6 +230,13 @@ document.addEventListener('contextmenu', (event) => {
         if (0 < mouse_pos.y && mouse_pos.y < canvas.width) {
             event.preventDefault()
         }
+    }
+})
+
+
+document.addEventListener('keydown', (event) => {
+	if (event.key == 'r') {
+    	grid.reset()
     }
 })
 
