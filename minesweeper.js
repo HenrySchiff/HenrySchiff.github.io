@@ -162,6 +162,7 @@ class Grid {
 
         this.allSquares = {}
         this.unrevealedSquares = []
+        this.started = false
         
         for (var x = 0; x < width; x ++) {
         	for (var y = 0; y < height; y ++) {
@@ -208,6 +209,45 @@ class Grid {
     }
 
 
+    firstClick(square) {
+        var toCheck = [...square.localNeighbors]
+        toCheck.push(square)
+        var dontBomb = [...toCheck]
+        var squareList = Object.values(this.allSquares)
+
+        while (toCheck.length > 0) {
+            if (toCheck[0].bomb) {
+                var randomIndex = Math.floor(Math.random() * squareList.length)
+                var randomSquare = squareList[randomIndex]
+
+                if (!randomSquare.bomb && !dontBomb.includes(randomSquare)) {
+                    randomSquare.bomb = true
+                    toCheck[0].bomb = false
+                    toCheck.splice(0, 1)
+                }
+
+            } else {
+                toCheck.splice(0, 1)
+            }
+        }
+
+        this.started = true
+        Object.values(this.allSquares).forEach(item => item.findNeighbors())
+
+        for (let i = 0; i < dontBomb.length; i++) {
+            var element = dontBomb[i]
+
+            if (element.number == 0) {
+                element.caving()
+            } else {
+                element.reveal()
+            }
+            
+        }
+
+    }
+
+
     // gameOver() {
     //     for (let i = 0; i < this.unrevealedSquares.length; i++) {
     //         this.unrevealedSquares[i].revealed = true
@@ -224,6 +264,7 @@ class Grid {
         let squareList = Object.values(this.allSquares)
         squareList.forEach(element => {element.bomb = false});
 
+        this.started = false
     	this.shuffleBombs(this.bombDensity)
     	this.unrevealedSquares = []
         for (var i = 0; i < squareList.length; i ++) {
@@ -261,7 +302,9 @@ document.addEventListener('mousedown', (event) => {
     
     if (square) {
         if (event.which == 1 && !square.flagged) {
-            if (square.bomb) {
+            if (!grid.started) {
+                grid.firstClick(square)
+            } else if (square.bomb) {
                 console.log('bomb')
                 grid.gameOver()
             } else if (square.number == 0) {
