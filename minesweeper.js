@@ -18,10 +18,10 @@ const difficulties = {
     'hard': [24, 24, 0.20]
 }
 const difficultyMenu = document.getElementById('difficulty')
+const resetButton = document.getElementById('resetButton')
 
 
 function setDifficulty() {
-    console.log('br')
     let difficulty = difficultyMenu.value
 	info = difficulties[difficulty]
     let width = info[0]; let height = info[1]; let bombDensity = info[2];
@@ -205,7 +205,6 @@ class Grid {
             count += 1
             this.allSquares[element].bomb = true
         })
-        console.log(count)
     }
 
 
@@ -293,7 +292,10 @@ var grid = new Grid(16, 16, 0.18);
 setDifficulty(difficultyMenu.value)
 
 
-document.getElementById('difficulty').onchange = setDifficulty;
+difficultyMenu.onchange = setDifficulty;
+
+resetButton.addEventListener('click', (event) => {grid.reset()})
+
 
 
 document.addEventListener('mousedown', (event) => {
@@ -305,7 +307,6 @@ document.addEventListener('mousedown', (event) => {
             if (!grid.started) {
                 grid.firstClick(square)
             } else if (square.bomb) {
-                console.log('bomb')
                 grid.gameOver()
             } else if (square.number == 0) {
                 square.caving()

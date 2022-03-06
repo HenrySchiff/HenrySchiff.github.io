@@ -12,19 +12,24 @@
                 <li><a href="./minesweeper.html">Minesweeper</a></li>
             </ul>
             <h2>Henry's Domain</h2>
-            <br>
             
+            <br>
+            <br>
+            <input type="button" value='Reset' id='resetButton'/>
+            <br>
+            <br>
+            <style>canvas { border: 5px solid rgb(166,77,69); }</style>
+            <canvas width="700" height="700" id="canvas"></canvas>
+
+            <br>
+            <br>
             <label>Difficulty:</label>
             <select id="difficulty">
               <option value="easy">Easy</option>
               <option value="normal" selected>Normal</option>
               <option value="hard">Hard</option>
             </select>
-            
-            <br>
-            <br>
-            <style>canvas { border: 5px solid rgb(166,77,69); }</style>
-            <canvas width="700" height="700" id="canvas"></canvas>
+
         </center>
         <script src="minesweeper.js"></script>
     </body>
