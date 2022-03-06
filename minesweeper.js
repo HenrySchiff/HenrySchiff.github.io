@@ -17,7 +17,9 @@ const difficulties = {
     'normal': [16, 16, 0.18],
     'hard': [24, 24, 0.20]
 }
+
 const difficultyMenu = document.getElementById('difficulty')
+const themeMenu = document.getElementById('theme')
 const resetButton = document.getElementById('resetButton')
 
 
@@ -39,6 +41,17 @@ function setDifficulty() {
 // var unrevealedSquares = []
 
 const colors = ['blue', 'green', 'red', 'darkBlue', 'maroon', 'teal', 'black', 'darkgray']
+
+const themes = {
+    'classic': {
+        flat: 'darkgray', tint: 'gainsboro', shade: 'gray', line: 'dimgray', flag: 'red'},
+    'bubblegum': {
+        flat: 'rgb(241, 149, 173)', tint: 'rgb(249, 187, 196)', shade: 'rgb(235, 121, 155)', 
+        line: 'mediumvioletred', flag: 'rgb(227, 86, 102)'}
+}
+var theme = 'classic'
+
+
 
 class Square {
 	constructor(x, y, grid) {
@@ -128,23 +141,23 @@ class Square {
 
             ctx.rect(this.x, this.y, unit, unit)
             ctx.lineWidth = 0.5
-            ctx.strokeStyle = 'dimgray'
+            ctx.strokeStyle = themes[theme].line
             ctx.stroke()
 
         } else {
             var border = 3 * scale
-        	ctx.fillStyle = 'gray'
+        	ctx.fillStyle = themes[theme].shade
             ctx.fillRect(this.x, this.y, unit, unit)
             ctx.beginPath()
-        	ctx.fillStyle = 'gainsboro'
+        	ctx.fillStyle = themes[theme].tint
             ctx.fillRect(this.x, this.y, unit - border, unit - border)
             ctx.beginPath()
-        	ctx.fillStyle = 'darkgray'
+        	ctx.fillStyle = themes[theme].flat
             ctx.fillRect(this.x + border, this.y + border, unit - border * 2, unit - border * 2)
             ctx.beginPath()
 
             if (this.flagged) {
-                ctx.fillStyle = 'red'
+                ctx.fillStyle = themes[theme].flag
                 ctx.beginPath();
                 ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 4, 0, 2 * Math.PI);
                 ctx.fill();
@@ -269,6 +282,7 @@ class Grid {
         for (var i = 0; i < squareList.length; i ++) {
             let s = squareList[i]
         	s.revealed = false
+            s.flagged = false
             s.findNeighbors()
             this.unrevealedSquares.push(s)
         }
@@ -293,6 +307,9 @@ setDifficulty(difficultyMenu.value)
 
 
 difficultyMenu.onchange = setDifficulty;
+themeMenu.onchange = function() {
+    theme = themeMenu.value
+}
 
 resetButton.addEventListener('click', (event) => {grid.reset()})
 
@@ -354,7 +371,7 @@ function getMousePos(canvas, evt) {
 
 
 function drawWindow(ctx) {
-	ctx.fillStyle = 'darkgray';
+	ctx.fillStyle = themes[theme].flat;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     Object.values(grid.allSquares).forEach(item =>
