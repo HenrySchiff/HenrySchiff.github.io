@@ -2,22 +2,48 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d')
 
 
-const unit = 20
+const unit = 25
+var scale = unit / 20
+
 const neighbors = [
 	[-unit, -unit], [0, -unit], [unit, -unit],
 	[-unit, 0], [unit, 0],
 	[-unit, unit], [0, unit], [unit, unit],
     ]
+    
+
+const difficulties = {
+	'easy': [8, 8, 0.15],
+    'normal': [16, 16, 0.18],
+    'hard': [24, 24, 0.20]
+}
+const difficultyMenu = document.getElementById('difficulty')
 
 
-const allSquares = new Object();
-var unrevealedSquares = []
+function setDifficulty() {
+    console.log('br')
+    let difficulty = difficultyMenu.value
+	info = difficulties[difficulty]
+    let width = info[0]; let height = info[1]; let bombDensity = info[2];
+    canvas.width = width * unit
+    canvas.height = height * unit
+    grid.bombDensity = bombDensity
+    grid.resize(width, height)
+    grid.reset()
 
-const colors = ['blue', 'green', 'red', 'darkBlue', 'maroon', 'turquoise', 'black', 'darkgray']
+}
+
+
+
+// var allSquares = new Object();
+// var unrevealedSquares = []
+
+const colors = ['blue', 'green', 'red', 'darkBlue', 'maroon', 'teal', 'black', 'darkgray']
 
 class Square {
-	constructor(x, y) {
-    	allSquares[[x, y]] = this;
+	constructor(x, y, grid) {
+    	grid.allSquares[[x, y]] = this;
+        this.grid = grid
     	this.x = x;
         this.y = y;
         
@@ -34,8 +60,8 @@ class Square {
         	var n = neighbors[i]
             var index = [this.x + n[0], this.y + n[1]].toString()
 
-            if (Object.keys(allSquares).includes(index)) {
-                localNeighbors.push(allSquares[index])
+            if (Object.keys(this.grid.allSquares).includes(index)) {
+                localNeighbors.push(this.grid.allSquares[index])
         	}   
         }
             
@@ -76,8 +102,8 @@ class Square {
     
     reveal() {
     	this.revealed = true
-        var index = unrevealedSquares.indexOf(this)
-        unrevealedSquares.splice(index, 1)
+        var index = this.grid.unrevealedSquares.indexOf(this)
+        this.grid.unrevealedSquares.splice(index, 1)
     }
     
     
@@ -85,6 +111,8 @@ class Square {
         /* ctx.fillStyle = this.color
         ctx.fillRect(this.x, this.y, unit, unit)
         ctx.beginPath() */
+        var fontSize = 14 * scale
+        var font = 'bold ' + fontSize.toString() + 'px arial'
 
 		if (this.revealed) {
             if (this.bomb) {
@@ -93,9 +121,9 @@ class Square {
                 ctx.arc(this.x + unit / 2, this.y + unit / 2, unit / 4, 0, 2 * Math.PI);
                 ctx.fill();
             } else if (this.number > 0) {
-                ctx.font = 'bold 14px arial'
+                ctx.font = font
                 ctx.fillStyle = colors[this.number - 1]
-                ctx.fillText(this.number, this.x + 6, this.y + 15)
+                ctx.fillText(this.number, this.x + 6 * scale, this.y + 15 * scale)
             }
 
             ctx.rect(this.x, this.y, unit, unit)
@@ -104,7 +132,7 @@ class Square {
             ctx.stroke()
 
         } else {
-            var border = 3
+            var border = 3 * scale
         	ctx.fillStyle = 'gray'
             ctx.fillRect(this.x, this.y, unit, unit)
             ctx.beginPath()
@@ -131,33 +159,38 @@ class Grid {
     	this.width = width
         this.height = height
         this.bombDensity = bombDensity
+
+        this.allSquares = {}
+        this.unrevealedSquares = []
         
         for (var x = 0; x < width; x ++) {
         	for (var y = 0; y < height; y ++) {
-            	var s = new Square(x * unit, y * unit);
-                unrevealedSquares.push(s);
+            	var s = new Square(x * unit, y * unit, this);
+                this.unrevealedSquares.push(s);
             }
         }
         
         this.shuffleBombs(bombDensity)
         
-        Object.values(allSquares).forEach(item => item.findNeighbors())
+        Object.values(this.allSquares).forEach(item => item.findNeighbors())
         
     }
 
     mouseToSquare (mouse_pos) {
-        var index = [mouse_pos.x - (mouse_pos.x % unit), mouse_pos.y - (mouse_pos.y % unit)].toString()
+        if (mouse_pos.x >= 0 && mouse_pos.y >= 0) {
+            var index = [mouse_pos.x - (mouse_pos.x % unit), mouse_pos.y - (mouse_pos.y % unit)].toString()
 
-        if (Object.keys(allSquares).includes(index)) {
-            return allSquares[index];
+            if (Object.keys(this.allSquares).includes(index)) {
+                return this.allSquares[index];
+            }
         }
         return
     }
 
 
     shuffleBombs (bombDensity) {
-        var bombCount = bombDensity * Object.values(allSquares).length
-        var pool = [...Object.keys(allSquares)]
+        var bombCount = bombDensity * Object.values(this.allSquares).length
+        var pool = [...Object.keys(this.allSquares)]
         var selected = []
 
         while (selected.length < bombCount) {
@@ -169,36 +202,57 @@ class Grid {
         var count = 0
         selected.forEach(element => {
             count += 1
-            allSquares[element].bomb = true
+            this.allSquares[element].bomb = true
         })
         console.log(count)
     }
 
 
+    // gameOver() {
+    //     for (let i = 0; i < this.unrevealedSquares.length; i++) {
+    //         this.unrevealedSquares[i].revealed = true
+    //     }
+    // }
+
     gameOver() {
-        for (let i = 0; i < unrevealedSquares.length; i++) {
-            unrevealedSquares[i].revealed = true
+        for (let i = 0; i < Object.values(this.allSquares).length; i++) {
+            Object.values(this.allSquares)[i].revealed = true
         }
     }
     
     reset() {
-        Object.values(allSquares).forEach(element => {
-            element.bomb = false
-        });
+        let squareList = Object.values(this.allSquares)
+        squareList.forEach(element => {element.bomb = false});
 
     	this.shuffleBombs(this.bombDensity)
-    	unrevealedSquares = []
-        for (var i = 0; i < Object.values(allSquares).length; i ++) {
-            let s = Object.values(allSquares)[i]
+    	this.unrevealedSquares = []
+        for (var i = 0; i < squareList.length; i ++) {
+            let s = squareList[i]
         	s.revealed = false
             s.findNeighbors()
-            unrevealedSquares.push(s)
+            this.unrevealedSquares.push(s)
         }
     }
+
+    resize(width, height) {
+        this.allSquares = {}
+        this.unrevealedSquares = []
+        for (var x = 0; x < width; x ++) {
+        	for (var y = 0; y < height; y ++) {
+            	var s = new Square(x * unit, y * unit, this);
+                this.unrevealedSquares.push(s);
+            }
+        }
+    }
+
 }
 
 
-const grid = new Grid(35, 35, 0.10);
+var grid = new Grid(16, 16, 0.18);
+setDifficulty(difficultyMenu.value)
+
+
+document.getElementById('difficulty').onchange = setDifficulty;
 
 
 document.addEventListener('mousedown', (event) => {
@@ -237,7 +291,12 @@ document.addEventListener('keydown', (event) => {
 	if (event.key == 'r') {
     	grid.reset()
     }
+    if (event.key == 'g') {
+    	grid.gameOver()
+    }
 })
+
+// difficultyMenu.addEventListener('selectionChange', setDifficulty(difficultyMenu.value))
 
 
 function getMousePos(canvas, evt) {
@@ -254,7 +313,7 @@ function drawWindow(ctx) {
 	ctx.fillStyle = 'darkgray';
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    Object.values(allSquares).forEach(item =>
+    Object.values(grid.allSquares).forEach(item =>
         item.draw(ctx))
     
 }
