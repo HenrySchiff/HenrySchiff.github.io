@@ -21,6 +21,7 @@ const difficulties = {
 const difficultyMenu = document.getElementById('difficulty')
 const themeMenu = document.getElementById('theme')
 const resetButton = document.getElementById('resetButton')
+const scaleSlider = document.getElementById('scaleSlider')
 
 
 function setDifficulty() {
@@ -44,10 +45,14 @@ const colors = ['blue', 'green', 'red', 'darkBlue', 'maroon', 'teal', 'black', '
 
 const themes = {
     'classic': {
-        flat: 'darkgray', tint: 'gainsboro', shade: 'gray', line: 'dimgray', flag: 'red'},
+        flat: 'darkgray', tint: 'gainsboro', shade: 'gray', line: 'dimgray', flag: 'red',
+        background: 'darkgray'},
+    'onthegreen': {
+        flat: 'rgb(170, 215, 81)', tint: 'rgb(200, 240, 120)', shade: 'rgb(142, 184, 61)', 
+        line: 'rgb(171, 137, 103)', flag: 'red', background: 'rgb(229, 194, 159)'},
     'bubblegum': {
         flat: 'rgb(241, 149, 173)', tint: 'rgb(249, 187, 196)', shade: 'rgb(235, 121, 155)', 
-        line: 'mediumvioletred', flag: 'rgb(227, 86, 102)'}
+        line: 'mediumvioletred', flag: 'rgb(227, 86, 102)', background: 'rgb(241, 149, 173)'}
 }
 var theme = 'classic'
 
@@ -310,6 +315,9 @@ difficultyMenu.onchange = setDifficulty;
 themeMenu.onchange = function() {
     theme = themeMenu.value
 }
+// scaleSlider.onchange = function() {
+//     unit = scaleSlider.value
+// }
 
 resetButton.addEventListener('click', (event) => {grid.reset()})
 
@@ -371,7 +379,7 @@ function getMousePos(canvas, evt) {
 
 
 function drawWindow(ctx) {
-	ctx.fillStyle = themes[theme].flat;
+	ctx.fillStyle = themes[theme].background;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     Object.values(grid.allSquares).forEach(item =>
