@@ -62,3 +62,10 @@ select {
 track {
     color:#f29545
 }
+.timer {
+    color: rgb(255, 255, 255);
+    font-family:'Alegreya Sans SC';
+    font-size: 30px;
+    letter-spacing: 4px;
+    word-spacing: 6px;
+}

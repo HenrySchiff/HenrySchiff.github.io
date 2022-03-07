@@ -22,6 +22,7 @@ const difficultyMenu = document.getElementById('difficulty')
 const themeMenu = document.getElementById('theme')
 const resetButton = document.getElementById('resetButton')
 const scaleSlider = document.getElementById('scaleSlider')
+const timerDisplay = document.getElementById('timerDisplay')
 
 
 function setDifficulty() {
@@ -55,6 +56,60 @@ const themes = {
         line: 'mediumvioletred', flag: 'rgb(227, 86, 102)', background: 'rgb(241, 149, 173)'}
 }
 var theme = 'classic'
+
+
+
+/**
+ * Self-adjusting interval to account for drifting
+ * 
+ * @param {function} workFunc  Callback containing the work to be done
+ *                             for each interval
+ * @param {int}      interval  Interval speed (in milliseconds)
+ * @param {function} errorFunc (Optional) Callback to run if the drift
+ *                             exceeds interval
+ */
+ function AdjustingInterval(workFunc, interval, errorFunc) {
+    var that = this;
+    var expected, timeout;
+    this.interval = interval;
+
+    this.start = function() {
+        expected = Date.now() + this.interval;
+        timeout = setTimeout(step, this.interval);
+    }
+
+    this.stop = function() {
+        clearTimeout(timeout);
+    }
+
+    function step() {
+        var drift = Date.now() - expected;
+        if (drift > that.interval) {
+            // You could have some default stuff here too...
+            if (errorFunc) errorFunc();
+        }
+        workFunc();
+        expected += that.interval;
+        timeout = setTimeout(step, Math.max(0, that.interval-drift));
+    }
+}
+
+
+
+var time = 0
+
+function updateTimer() {
+    ++time
+    var seconds = (time % 60.).toString()
+    var minutes = ((time - seconds) / 60).toString()
+
+    if (time % 60 < 10) {seconds = '0' + seconds}
+    var string = minutes + ':' + seconds
+
+    timerDisplay.innerHTML = string
+}
+
+var timer = new AdjustingInterval(updateTimer, 1000)
 
 
 
@@ -181,6 +236,7 @@ class Grid {
         this.allSquares = {}
         this.unrevealedSquares = []
         this.started = false
+        this.bombCount = undefined
         
         for (var x = 0; x < width; x ++) {
         	for (var y = 0; y < height; y ++) {
@@ -208,11 +264,11 @@ class Grid {
 
 
     shuffleBombs (bombDensity) {
-        var bombCount = bombDensity * Object.values(this.allSquares).length
+        this.bombCount = bombDensity * Object.values(this.allSquares).length
         var pool = [...Object.keys(this.allSquares)]
         var selected = []
 
-        while (selected.length < bombCount) {
+        while (selected.length < this.bombCount) {
             var randomIndex = Math.floor(Math.random() * pool.length)
             selected.push(pool[randomIndex])
             pool.splice(randomIndex, 1)
@@ -248,6 +304,7 @@ class Grid {
             }
         }
 
+        timer.start()
         this.started = true
         Object.values(this.allSquares).forEach(item => item.findNeighbors())
 
@@ -272,6 +329,7 @@ class Grid {
     // }
 
     gameOver() {
+        timer.stop()
         for (let i = 0; i < Object.values(this.allSquares).length; i++) {
             Object.values(this.allSquares)[i].revealed = true
         }
@@ -280,6 +338,11 @@ class Grid {
     reset() {
         let squareList = Object.values(this.allSquares)
         squareList.forEach(element => {element.bomb = false});
+
+        time = 0
+        timerDisplay.innerHTML = '0:00'
+        timer.stop()
+        timer = new AdjustingInterval(updateTimer, 1000)
 
         this.started = false
     	this.shuffleBombs(this.bombDensity)
@@ -365,7 +428,6 @@ document.addEventListener('keydown', (event) => {
     }
 })
 
-// difficultyMenu.addEventListener('selectionChange', setDifficulty(difficultyMenu.value))
 
 
 function getMousePos(canvas, evt) {
