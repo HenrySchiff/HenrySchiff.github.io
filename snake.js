@@ -2,7 +2,7 @@ var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
 function getDistance(p1, p2) {
-    return ((p2.x - p1.x) ** 2 + (p1.y - p2.y) ** 2) ** 0.5
+    return ((p2[0] - p1[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
 }
 
 function segmentIntersection(line_1s, line_1e, line_2s, line_2e) {
@@ -19,7 +19,8 @@ function segmentIntersection(line_1s, line_1e, line_2s, line_2e) {
         }
         
     } else {
-    	console.log('parallel or collinear')
+    	/* console.log('parallel or collinear') */
+        return
     }
 }
 
@@ -35,7 +36,7 @@ document.addEventListener('keydown', (event) => {
         keys.push(keyName);
     }
 
-    if (keys.includes(' ')) {
+    if (keys.includes('p')) {
         pause = !pause
     }
 })
@@ -59,10 +60,10 @@ class Snake {
         this.speed = 2
         
         this.color = 'red'
-        this.headLength = 40
+        this.headLength = 10
         this.head = [[this.x, this.y], [this.x + Math.cos(this.angle) * this.headLength, this.y + Math.sin(this.angle) * this.headLength]]
         this.trail = []
-        this.trailLength = 15
+        this.trailLength = 5
         this.segmentLength = 10
         this.currentLength = 0
     }
@@ -89,9 +90,30 @@ class Snake {
     	this.angle += amount
     }
 
-    checkCollision() {
+    checkCollision(borders, apples) {
         this.color = 'red'
-        for (let i = 0; i < this.trail.length - 1; i++) {
+        
+        for (var i = 0; i < apples.length; i ++) {
+            var distance = getDistance(this.head[0], [apples[i].x, apples[i].y])
+            console.log(distance)
+            if (distance < this.headLength + apples[i].radius) {
+                apples[i].eat()
+                this.trailLength += 1
+                break
+            }
+        }
+        
+        for (var i = 0; i < borders.length; i++) {
+        	var border = borders[i]
+            var intersection = segmentIntersection(this.head[0], this.head[1], border[0], border[1])
+            if (intersection) {
+                this.color = 'yellow'
+                console.log('hit')
+                return
+            }
+        }
+        
+        for (var i = 0; i < this.trail.length - 1; i++) {
             var line = [this.trail[i], this.trail[i + 1]];
             var intersection = segmentIntersection(this.head[0], this.head[1], line[0], line[1])
             if (intersection) {
@@ -118,14 +140,70 @@ class Snake {
         for (var i = 0; i < this.trail.length - 1; i++) {
         	let p1 = this.trail[i]; let p2 = this.trail[i + 1]
             ctx.beginPath();
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 10;
             ctx.strokeStyle = 'white';
             ctx.moveTo(p1[0], p1[1]);
             ctx.lineTo(p2[0], p2[1]);
             ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(p1[0], p1[1], 5, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'blue';
+            ctx.moveTo(p1[0], p1[1]);
+            ctx.lineTo(p2[0], p2[1]);
+            ctx.stroke();
+        }
+        
+        if (this.trail.length > 0) {
+        	let closestTrail = this.trail[this.trail.length - 1]
+        	
+            ctx.beginPath();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = 'white';
+            ctx.moveTo(closestTrail[0], closestTrail[1]);
+            ctx.lineTo(this.x, this.y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(closestTrail[0], closestTrail[1], 5, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'white';
+            ctx.fill();
         }
     }
 }
+
+
+const apples = []
+
+class Apple {
+	constructor(x, y) {
+    	apples.push(this)
+    	this.x = x
+        this.y = y
+        this.radius = 7
+    }
+    
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+    }
+    
+    eat() {
+    	let index = apples.indexOf(this)
+        apples.splice(index, 1)
+        let x = Math.floor(Math.random() * canvas.width)
+        let y = Math.floor(Math.random() * canvas.height)
+        new Apple(x, y)
+    }
+}
+
 
 
 function getMousePos(canvas, evt) {
@@ -138,7 +216,19 @@ function getMousePos(canvas, evt) {
 }
 
 
+var x = Math.floor(Math.random() * canvas.width)
+var y = Math.floor(Math.random() * canvas.height)
+new Apple(x, y)
+
 const snake = new Snake(200, 200, 0)
+
+const buffer = 10
+const borders = [
+	[[buffer, buffer], [canvas.width - buffer, buffer]], 
+    [[canvas.width - buffer, buffer], [canvas.width - buffer, canvas.height - buffer]],
+    [[canvas.width - buffer, canvas.height - buffer], [buffer, canvas.height - buffer]], 
+    [[buffer, canvas.height - buffer], [buffer, buffer]]
+]
 
 
 function drawWindow() {
@@ -146,6 +236,20 @@ function drawWindow() {
 
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    for (var i = 0; i < borders.length; i ++) {
+    	b = borders[i]
+    	ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'white';
+        ctx.moveTo(b[0][0], b[0][1]);
+        ctx.lineTo(b[1][0], b[1][1]);
+        ctx.stroke();
+    }
+    
+    for (var i = 0; i < apples.length; i ++) {
+    	apples[i].draw()
+    }
     
     snake.draw()
 
@@ -156,14 +260,14 @@ var count = 0
 function loop() {
     if (!pause){
         snake.move()
-        snake.checkCollision()
+        snake.checkCollision(borders, apples)
     }
     
-    if (keys.includes('arrowright')) {
-    	snake.rotate(0.05)
+    if (keys.includes('arrowright') || keys.includes('d')) {
+    	snake.rotate(0.07)
     }
-    if (keys.includes('arrowleft')) {
-    	snake.rotate(-0.05)
+    if (keys.includes('arrowleft') || keys.includes('a')) {
+    	snake.rotate(-0.07)
     }
 
     drawWindow();
