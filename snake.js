@@ -127,7 +127,7 @@ class Snake {
             }
         }
         
-        for (var i = 0; i < this.trail.length - 1; i++) {
+        for (var i = 0; i < this.trail.length - 2; i++) {
             var line = [this.trail[i], this.trail[i + 1]];
             var intersection = segmentIntersection(this.head[0], this.head[1], line[0], line[1])
             if (intersection) {
