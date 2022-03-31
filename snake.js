@@ -1,8 +1,14 @@
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
+const pi = 3.1415926
+
 function getDistance(p1, p2) {
     return ((p2[0] - p1[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
+}
+
+function getAngle(p1, p2) {
+	return Math.atan2(p2[1] - p1[1], p2[0] - p1[0])
 }
 
 function segmentIntersection(line_1s, line_1e, line_2s, line_2e) {
@@ -13,7 +19,6 @@ function segmentIntersection(line_1s, line_1e, line_2s, line_2e) {
         
         if (t1 >= 0 && t1 < 1 && t2 >= 0 && t2 < 1) {
             return true
-
         } else {
             return false
         }
@@ -23,6 +28,11 @@ function segmentIntersection(line_1s, line_1e, line_2s, line_2e) {
         return
     }
 }
+
+
+
+const resetButton = document.getElementById('resetButton')
+const scoreDisplay = document.getElementById('scoreDisplay')
 
 
 const keys = []
@@ -58,14 +68,17 @@ class Snake {
         this.y = y
         this.angle = angle
         this.speed = 2
+        this.dead = false
         
         this.color = 'red'
         this.headLength = 10
         this.head = [[this.x, this.y], [this.x + Math.cos(this.angle) * this.headLength, this.y + Math.sin(this.angle) * this.headLength]]
         this.trail = []
-        this.trailLength = 5
-        this.segmentLength = 10
+        this.trailLength = 15
+        this.segmentLength = 5
         this.currentLength = 0
+        
+        scoreDisplay.innerHTML = 'Score ' + this.trailLength.toString()
     }
     
     move() {
@@ -76,7 +89,7 @@ class Snake {
         this.head = [[this.x, this.y], [this.x + Math.cos(this.angle) * this.headLength, this.y + Math.sin(this.angle) * this.headLength]]
         
         if (this.currentLength < this.segmentLength) {
-        	this.currentLength += 1
+        	this.currentLength += this.speed
         } else {
         	this.trail.push([this.x, this.y])
         	this.currentLength = 0
@@ -95,10 +108,10 @@ class Snake {
         
         for (var i = 0; i < apples.length; i ++) {
             var distance = getDistance(this.head[0], [apples[i].x, apples[i].y])
-            console.log(distance)
             if (distance < this.headLength + apples[i].radius) {
                 apples[i].eat()
-                this.trailLength += 1
+                this.trailLength += 3
+                scoreDisplay.innerHTML = 'Score ' + this.trailLength.toString()
                 break
             }
         }
@@ -108,6 +121,7 @@ class Snake {
             var intersection = segmentIntersection(this.head[0], this.head[1], border[0], border[1])
             if (intersection) {
                 this.color = 'yellow'
+                this.dead = true
                 console.log('hit')
                 return
             }
@@ -118,6 +132,7 @@ class Snake {
             var intersection = segmentIntersection(this.head[0], this.head[1], line[0], line[1])
             if (intersection) {
                 this.color = 'yellow'
+                this.dead = true
                 console.log('hit')
                 return
             }
@@ -127,7 +142,7 @@ class Snake {
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, 5, 0, 2 * Math.PI, false);
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = 'white';
         ctx.fill();
         
         ctx.beginPath();
@@ -137,7 +152,7 @@ class Snake {
         ctx.lineTo(this.head[1][0], this.head[1][1]);
         ctx.stroke();
         
-        for (var i = 0; i < this.trail.length - 1; i++) {
+        for (var i = 1; i < this.trail.length - 1; i++) {
         	let p1 = this.trail[i]; let p2 = this.trail[i + 1]
             ctx.beginPath();
             ctx.lineWidth = 10;
@@ -150,13 +165,7 @@ class Snake {
             ctx.arc(p1[0], p1[1], 5, 0, 2 * Math.PI, false);
             ctx.fillStyle = 'white';
             ctx.fill();
-            
-            ctx.beginPath();
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'blue';
-            ctx.moveTo(p1[0], p1[1]);
-            ctx.lineTo(p2[0], p2[1]);
-            ctx.stroke();
+        
         }
         
         if (this.trail.length > 0) {
@@ -174,6 +183,42 @@ class Snake {
             ctx.fillStyle = 'white';
             ctx.fill();
         }
+        
+        if (this.trail.length > 1) {
+            let tail = this.trail[0]
+            let angle = getAngle(this.trail[1], tail)
+            let length = this.segmentLength - this.currentLength
+            let x = Math.cos(angle) * length + this.trail[1][0]
+            let y = Math.sin(angle) * length + this.trail[1][1]
+            /* console.log(this.trail[1])
+            console.log(x,y) */
+	
+
+            ctx.beginPath();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = 'white';
+            ctx.moveTo(this.trail[1][0], this.trail[1][1]);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+       	}
+        
+    }
+
+    
+    reset() {
+        this.dead = false
+        this.trail = []
+        this.trailLength = 15
+        this.currentLength = 0
+        this.angle = 0
+        this.x = 200; this.y = 200
+        
+        scoreDisplay.innerHTML = 'Score ' + this.trailLength.toString()
     }
 }
 
@@ -181,11 +226,12 @@ class Snake {
 const apples = []
 
 class Apple {
-	constructor(x, y) {
+	constructor(x, y, buffer) {
     	apples.push(this)
     	this.x = x
         this.y = y
         this.radius = 7
+        this.buffer = buffer
     }
     
     draw() {
@@ -198,8 +244,11 @@ class Apple {
     eat() {
     	let index = apples.indexOf(this)
         apples.splice(index, 1)
-        let x = Math.floor(Math.random() * canvas.width)
-        let y = Math.floor(Math.random() * canvas.height)
+        let x = 25 + Math.random() * (canvas.width - 50)
+        let y = 25 + Math.random() * (canvas.height - 50)
+        // let x = Math.floor(Math.random() * (canvas.width))
+        // let y = Math.floor(Math.random() * (canvas.height))
+        console.log(x, y)
         new Apple(x, y)
     }
 }
@@ -215,11 +264,6 @@ function getMousePos(canvas, evt) {
     };
 }
 
-
-var x = Math.floor(Math.random() * canvas.width)
-var y = Math.floor(Math.random() * canvas.height)
-new Apple(x, y)
-
 const snake = new Snake(200, 200, 0)
 
 const buffer = 10
@@ -229,6 +273,14 @@ const borders = [
     [[canvas.width - buffer, canvas.height - buffer], [buffer, canvas.height - buffer]], 
     [[buffer, canvas.height - buffer], [buffer, buffer]]
 ]
+
+
+let x = 25 + Math.random() * (canvas.width - 50)
+let y = 25 + Math.random() * (canvas.height - 50)
+new Apple(x, y, buffer)
+
+
+resetButton.addEventListener('click', (event) => {snake.reset()})
 
 
 function drawWindow() {
@@ -258,7 +310,7 @@ function drawWindow() {
 
 var count = 0
 function loop() {
-    if (!pause){
+    if (!pause && !snake.dead){
         snake.move()
         snake.checkCollision(borders, apples)
     }
@@ -268,6 +320,11 @@ function loop() {
     }
     if (keys.includes('arrowleft') || keys.includes('a')) {
     	snake.rotate(-0.07)
+    }
+    if (keys.includes('arrowup') || keys.includes('w')) {
+    	snake.speed = 4
+    } else {
+    	snake.speed = 2
     }
 
     drawWindow();
