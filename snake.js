@@ -77,6 +77,8 @@ class Snake {
         this.trailLength = 15
         this.segmentLength = 5
         this.currentLength = 0
+
+        this.hitSegment = undefined
         
         scoreDisplay.innerHTML = 'Score ' + this.trailLength.toString()
     }
@@ -133,6 +135,7 @@ class Snake {
             if (intersection) {
                 this.color = 'yellow'
                 this.dead = true
+                this.hitSegment = i
                 console.log('hit')
                 return
             }
@@ -152,36 +155,49 @@ class Snake {
         ctx.lineTo(this.head[1][0], this.head[1][1]);
         ctx.stroke();
         
+        let colors = ['yellow', 'red']
+        let index = 0
+
         for (var i = 1; i < this.trail.length - 1; i++) {
         	let p1 = this.trail[i]; let p2 = this.trail[i + 1]
             ctx.beginPath();
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = 'white';
+            // ctx.lineWidth = 10;
+            ctx.lineWidth = 2
+            // ctx.strokeStyle = 'white';
+            ctx.strokeStyle = colors[index]
+
+            if (i == this.hitSegment) {
+                ctx.strokeStyle = 'blue'
+            }
+
             ctx.moveTo(p1[0], p1[1]);
             ctx.lineTo(p2[0], p2[1]);
             ctx.stroke();
+
+            index += 1
+            index %= 2
             
-            ctx.beginPath();
-            ctx.arc(p1[0], p1[1], 5, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'white';
-            ctx.fill();
+            // ctx.beginPath();
+            // ctx.arc(p1[0], p1[1], 5, 0, 2 * Math.PI, false);
+            // ctx.fillStyle = 'white';
+            // ctx.fill();
         
         }
         
         if (this.trail.length > 0) {
         	let closestTrail = this.trail[this.trail.length - 1]
         	
-            ctx.beginPath();
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = 'white';
-            ctx.moveTo(closestTrail[0], closestTrail[1]);
-            ctx.lineTo(this.x, this.y);
-            ctx.stroke();
+            // ctx.beginPath();
+            // ctx.lineWidth = 10;
+            // ctx.strokeStyle = 'white';
+            // ctx.moveTo(closestTrail[0], closestTrail[1]);
+            // ctx.lineTo(this.x, this.y);
+            // ctx.stroke();
             
-            ctx.beginPath();
-            ctx.arc(closestTrail[0], closestTrail[1], 5, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'white';
-            ctx.fill();
+            // ctx.beginPath();
+            // ctx.arc(closestTrail[0], closestTrail[1], 5, 0, 2 * Math.PI, false);
+            // ctx.fillStyle = 'white';
+            // ctx.fill();
         }
         
         if (this.trail.length > 1) {
@@ -190,21 +206,18 @@ class Snake {
             let length = this.segmentLength - this.currentLength
             let x = Math.cos(angle) * length + this.trail[1][0]
             let y = Math.sin(angle) * length + this.trail[1][1]
-            /* console.log(this.trail[1])
-            console.log(x,y) */
-	
 
-            ctx.beginPath();
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = 'white';
-            ctx.moveTo(this.trail[1][0], this.trail[1][1]);
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            // ctx.beginPath();
+            // ctx.lineWidth = 10;
+            // ctx.strokeStyle = 'white';
+            // ctx.moveTo(this.trail[1][0], this.trail[1][1]);
+            // ctx.lineTo(x, y);
+            // ctx.stroke();
             
-            ctx.beginPath();
-            ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'white';
-            ctx.fill();
+            // ctx.beginPath();
+            // ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
+            // ctx.fillStyle = 'white';
+            // ctx.fill();
        	}
         
     }
@@ -212,6 +225,7 @@ class Snake {
     
     reset() {
         this.dead = false
+        this.hitSegment = undefined
         this.trail = []
         this.trailLength = 15
         this.currentLength = 0
