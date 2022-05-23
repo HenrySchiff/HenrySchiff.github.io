@@ -334,18 +334,18 @@ function loop() {
 
         window.setInterval(function() {
 
-        updateParticles();
-        for (let i = 0; i < 5; i++) {
-            updateLines();
-        }
+            updateParticles();
+            for (let i = 0; i < 5; i++) {
+                updateLines();
+            }
 
-        for (let i = 0; i < ripples.length; i++) {
-            ripples[i].tick();
-        }
+            for (let i = 0; i < ripples.length; i++) {
+                ripples[i].tick();
+            }
 
-        drawWindow();
+            drawWindow();
 
-        // console.log(mouse_pos)
+            // console.log(mouse_pos)
 
     }, 1000 / 60);
 

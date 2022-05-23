@@ -324,30 +324,37 @@ function drawWindow() {
 
 var count = 0
 function loop() {
-    if (!pause && !snake.dead){
-        snake.move()
-        snake.checkCollision(borders, apples)
-    }
     
-    if (keys.includes('arrowright') || keys.includes('d')) {
-    	snake.rotate(0.07)
-    }
-    if (keys.includes('arrowleft') || keys.includes('a')) {
-    	snake.rotate(-0.07)
-    }
-    if (keys.includes('arrowup') || keys.includes('w')) {
-    	snake.speed = 4
-    } else {
-    	snake.speed = 2
-    }
+        window.setInterval(function() {
 
-    drawWindow();
-    
-    if (count < 2000) {
-    window.requestAnimationFrame(loop);
-    // count += 1
-    }
+        if (!pause && !snake.dead){
+            snake.move()
+            snake.checkCollision(borders, apples)
+        }
+        
+        if (keys.includes('arrowright') || keys.includes('d')) {
+            snake.rotate(0.07)
+        }
+        if (keys.includes('arrowleft') || keys.includes('a')) {
+            snake.rotate(-0.07)
+        }
+        if (keys.includes('arrowup') || keys.includes('w')) {
+            snake.speed = 4
+        } else {
+            snake.speed = 2
+        }
+
+        drawWindow();
+        
+        // if (count < 2000) {
+        // window.requestAnimationFrame(loop);
+        // // count += 1
+        // }
+
+    }, 1000 / 60);
     
   }
   
-window.requestAnimationFrame(loop);
+loop()
+
+// window.requestAnimationFrame(loop);
