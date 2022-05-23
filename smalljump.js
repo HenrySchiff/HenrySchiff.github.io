@@ -140,7 +140,7 @@ class Player {
 
 const areas = []
 const areaColors = ['red', 'orange', 'yellow', 'green', 'darkturquoise']
-var areaIndex = 4
+var areaIndex = 0
 
 class Area {
     constructor(number) {
