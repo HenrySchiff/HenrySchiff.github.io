@@ -172,7 +172,7 @@ class Obstacle {
 
 
 
-const player = new Player(5, 4)
+const player = new Player(4, 13)
 
 new Area(0)
 new Area(1)
