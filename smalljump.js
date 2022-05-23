@@ -29,10 +29,10 @@ document.addEventListener('keyup', (event) => {
     if (keyName == ' ') {
         // console.log('release')
 
-        if (keys.includes('a')) {
+        if (keys.includes('a') || keys.includes('arrowleft')) {
             direction = -((player.charge / 1.6) * 0.2)
         } 
-        else if (keys.includes('d')) {
+        else if (keys.includes('d') || keys.includes('arrowright')) {
             direction = (player.charge / 1.6) * 0.2
         } else {
             direction = 0
@@ -139,8 +139,8 @@ class Player {
 
 
 const areas = []
-const areaColors = ['red', 'orange', 'yellow', 'green']
-var areaIndex = 0
+const areaColors = ['red', 'orange', 'yellow', 'green', 'darkturquoise']
+var areaIndex = 4
 
 class Area {
     constructor(number) {
@@ -217,13 +217,23 @@ new Obstacle(2, 13, 1, 1, 3)
 new Obstacle(3, 0, 0, borderWidth, 16)
 new Obstacle(3, 16 - borderWidth, 0, borderWidth, 16)
 
-new Obstacle(3, 2, 1, 1, 3)
-new Obstacle(3, 2, 8, 1, 3)
-new Obstacle(3, 13, 1, 1, 3)
+new Obstacle(3, 2, 5, 1, 3)
+// new Obstacle(3, 2, 8, 1, 3)
+new Obstacle(3, 13, 5, 1, 3)
 new Obstacle(3, 7, 0, 2, 1)
-new Obstacle(3, 7, 5, 2, 3)
+// new Obstacle(3, 7, 5, 2, 2)
 new Obstacle(3, 7, 11, 2, 3)
 new Obstacle(3, 9, 11, 2, 1)
+
+//AREA 4
+new Obstacle(4, 0, 0, borderWidth, 16)
+new Obstacle(4, 16 - borderWidth, 0, borderWidth, 16)
+
+new Obstacle(4, 7, 0, 2, 16)
+new Obstacle(4, 6, 6, 4, 1)
+new Obstacle(4, 6, 13, 4, 1)
+new Obstacle(4, 2, 8, 1, 3)
+new Obstacle(4, 13, 8, 1, 3)
 
 
 function setFavicon() {
@@ -257,12 +267,12 @@ function loop() {
     window.setInterval(function() {
     
         if (!player.airborn && player.charge == 0) {
-            if (keys.includes('a')) {
+            if (keys.includes('a') || keys.includes('arrowleft')) {
                 player.airborn = true
                 player.move(-4 * 0.026 * 6, 0)
             }
 
-            if (keys.includes('d')) {
+            if (keys.includes('d') || keys.includes('arrowright')) {
                 player.airborn = true
                 player.move(4 * 0.026 * 6, 0)
             }
@@ -305,7 +315,6 @@ function loop() {
             console.log('add')
         }
         
-        console.log(player.charge)
 
         setFavicon();
         drawWindow();

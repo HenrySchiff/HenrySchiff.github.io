@@ -332,23 +332,29 @@ function drawWindow() {
 var count = 0
 function loop() {
 
-    updateParticles();
-    for (let i = 0; i < 5; i++) {
-        updateLines();
-    }
+        window.setInterval(function() {
 
-    for (let i = 0; i < ripples.length; i++) {
-        ripples[i].tick();
-    }
+        updateParticles();
+        for (let i = 0; i < 5; i++) {
+            updateLines();
+        }
 
-    drawWindow();
+        for (let i = 0; i < ripples.length; i++) {
+            ripples[i].tick();
+        }
 
-    // console.log(mouse_pos)
+        drawWindow();
 
-    if (count < 100) {
-        window.requestAnimationFrame(loop);
+        // console.log(mouse_pos)
+
+    }, 1000 / 60);
+
+    // if (count < 100) {
+        // window.requestAnimationFrame(loop);
         // count += 1;
-    }
+    // }
   }
   
-window.requestAnimationFrame(loop);
+// window.requestAnimationFrame(loop);/
+
+loop()
