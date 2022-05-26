@@ -1,6 +1,8 @@
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
+var jumpSound = new Audio('boing.mp3')
+
 const keys = []
 
 document.addEventListener('keydown', (event) => {
@@ -30,12 +32,12 @@ document.addEventListener('keyup', (event) => {
         // console.log('release')
 
         if (keys.includes('a') || keys.includes('arrowleft')) {
-            direction = -((player.charge / 1.6) * 0.2)
+            var direction = -0.6
         } 
         else if (keys.includes('d') || keys.includes('arrowright')) {
-            direction = (player.charge / 1.6) * 0.2
+            var direction = 0.6
         } else {
-            direction = 0
+            var direction = 0
         }
 
         player.jump(direction)
@@ -65,6 +67,17 @@ class Player {
             this.charge += 0.5
         } else {
             this.charge = this.maxCharge
+
+            if (keys.includes('a') || keys.includes('arrowleft')) {
+                var direction = -0.6
+            } 
+            else if (keys.includes('d') || keys.includes('arrowright')) {
+                var direction = 0.6
+            } else {
+                var direction = 0
+            }
+    
+            player.jump(direction)
         }
     }
 
@@ -75,11 +88,12 @@ class Player {
             this.vy = -this.charge / 3
             this.vx = direction
             this.charge = 0
+            jumpSound.play()
         }
     }
 
     fall() {
-        this.vy += 1 * 0.026 * 6
+        this.vy += 1 * 0.026 * 8
         if (this.airborn) {
             this.move(0, this.vy)
             this.move(this.vx, 0)
@@ -91,6 +105,7 @@ class Player {
         this.vy = 0
         this.vx = 0
         this.jumps = 1
+        console.log('land air', this.airborn)
     }
 
     move(xMove, yMove) {
@@ -132,7 +147,16 @@ class Player {
     draw(ctx) {
         ctx.beginPath();
         ctx.fillStyle = 'white'
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+
+        if (this.charge > 0) {
+            var y = this.y + 1
+            var height = this.height /2
+        } else {
+            var y = this.y
+            var height = this.height
+        }
+
+        ctx.fillRect(this.x, y, this.width, height);
     }
 }
 
@@ -267,14 +291,20 @@ function loop() {
     window.setInterval(function() {
     
         if (!player.airborn && player.charge == 0) {
-            if (keys.includes('a') || keys.includes('arrowleft')) {
+            player.vx = 0
+
+            if (keys.includes('a') || keys.includes('arrowleft') && player.charge == 0) {
                 player.airborn = true
                 player.move(-4 * 0.026 * 6, 0)
+                console.log('air', player.airborn)
+                player.vx = -0.3
             }
 
-            if (keys.includes('d') || keys.includes('arrowright')) {
+            if (keys.includes('d') || keys.includes('arrowright') && player.charge == 0) {
                 player.airborn = true
                 player.move(4 * 0.026 * 6, 0)
+                console.log('air', player.airborn)
+                player.vx = 0.3
             }
         }
         // if (keys.includes('a')) {
@@ -293,14 +323,16 @@ function loop() {
         //     player.move(0, 6)
         // }
 
-        if (keys.includes(' ')) {
+        if (player.airborn) {
+            player.fall()
+        }
+        
+
+        if (keys.includes(' ') && !player.airborn) {
             player.chargeJump()
             // console.log(player.charge)
         }
 
-        if (player.airborn) {
-            player.fall()
-        }
 
 
         if (player.y > 16) {
@@ -315,6 +347,7 @@ function loop() {
             console.log('add')
         }
         
+        console.log(player.charge)
 
         setFavicon();
         drawWindow();
