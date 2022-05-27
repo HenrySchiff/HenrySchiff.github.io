@@ -18,6 +18,7 @@ function segmentIntersection(line_1s, line_1e, line_2s, line_2e) {
         let t2 = ((line_1s[1] - line_1e[1]) * (line_1s[0] - line_2s[0]) + (line_1e[0] - line_1s[0]) * (line_1s[1] - line_2s[1])) / h
         
         if (t1 >= 0 && t1 < 1 && t2 >= 0 && t2 < 1) {
+            console.log('hit', t1, t2)
             return true
         } else {
             return false
@@ -40,7 +41,7 @@ var pause = false
 
 document.addEventListener('keydown', (event) => {
     const keyName = event.key.toLowerCase();
-    console.log(keyName)
+    // console.log(keyName)
 
     if (!keys.includes(keyName)) {
         keys.push(keyName);
@@ -49,6 +50,11 @@ document.addEventListener('keydown', (event) => {
     if (keys.includes('p')) {
         pause = !pause
     }
+
+    if (keys.includes('s')) {
+        snake.skeleton = !snake.skeleton
+    }
+
 })
 
 
@@ -75,10 +81,16 @@ class Snake {
         this.head = [[this.x, this.y], [this.x + Math.cos(this.angle) * this.headLength, this.y + Math.sin(this.angle) * this.headLength]]
         this.trail = []
         this.trailLength = 15
+        // this.trailLength = 60
         this.segmentLength = 5
         this.currentLength = 0
 
         this.hitSegment = undefined
+        this.hitFramesNeeded = 1
+        this.hitFramesCurrent = 0
+        this.hitFramesStreak = false
+
+        this.skeleton = false
         
         scoreDisplay.innerHTML = 'Score ' + this.trailLength.toString()
     }
@@ -122,27 +134,108 @@ class Snake {
         	var border = borders[i]
             var intersection = segmentIntersection(this.head[0], this.head[1], border[0], border[1])
             if (intersection) {
-                this.color = 'yellow'
-                this.dead = true
-                console.log('hit')
-                return
+                if (intersection) {
+                    this.color = 'yellow'
+                    this.dead = true
+                }
             }
         }
         
-        for (var i = 0; i < this.trail.length - 2; i++) {
+        for (var i = 0; i < this.trail.length - 10; i++) {
             var line = [this.trail[i], this.trail[i + 1]];
             var intersection = segmentIntersection(this.head[0], this.head[1], line[0], line[1])
             if (intersection) {
-                this.color = 'yellow'
-                this.dead = true
-                this.hitSegment = i
-                console.log('hit')
+                if (this.hitFramesCurrent == this.hitFramesNeeded) {
+                    console.log(this.hitFramesCurrent, this.hitFramesNeeded)
+                    this.color = 'yellow'
+                    this.dead = true
+                    this.hitSegment = i
+
+                } else {
+                    this.hitFramesCurrent += 1
+                    console.log(this.hitFramesCurrent)
+                }
+
                 return
-            }
+            } 
+
         }
+
+        //only executes if no intersection that loop
+        this.hitFramesCurrent = 0
+    
     }
     
+
     draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 5, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = this.color;
+        ctx.moveTo(this.head[0][0], this.head[0][1]);
+        ctx.lineTo(this.head[1][0], this.head[1][1]);
+        ctx.stroke();
+
+        for (var i = 1; i < this.trail.length - 1; i++) {
+        	let p1 = this.trail[i]; let p2 = this.trail[i + 1]
+            ctx.beginPath();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = 'white';
+
+            ctx.moveTo(p1[0], p1[1]);
+            ctx.lineTo(p2[0], p2[1]);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(p1[0], p1[1], 5, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+        
+        }
+        
+        if (this.trail.length > 0) {
+        	let closestTrail = this.trail[this.trail.length - 1]
+        	
+            ctx.beginPath();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = 'white';
+            ctx.moveTo(closestTrail[0], closestTrail[1]);
+            ctx.lineTo(this.x, this.y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(closestTrail[0], closestTrail[1], 5, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+        }
+        
+        if (this.trail.length > 1) {
+            let tail = this.trail[0]
+            let angle = getAngle(this.trail[1], tail)
+            let length = this.segmentLength - this.currentLength
+            let x = Math.cos(angle) * length + this.trail[1][0]
+            let y = Math.sin(angle) * length + this.trail[1][1]
+
+            ctx.beginPath();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = 'white';
+            ctx.moveTo(this.trail[1][0], this.trail[1][1]);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+       	}
+        
+    }
+
+    drawSkeleton() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, 5, 0, 2 * Math.PI, false);
         ctx.fillStyle = 'white';
@@ -161,9 +254,8 @@ class Snake {
         for (var i = 1; i < this.trail.length - 1; i++) {
         	let p1 = this.trail[i]; let p2 = this.trail[i + 1]
             ctx.beginPath();
-            // ctx.lineWidth = 10;
+
             ctx.lineWidth = 2
-            // ctx.strokeStyle = 'white';
             ctx.strokeStyle = colors[index]
 
             if (i == this.hitSegment) {
@@ -176,50 +268,7 @@ class Snake {
 
             index += 1
             index %= 2
-            
-            // ctx.beginPath();
-            // ctx.arc(p1[0], p1[1], 5, 0, 2 * Math.PI, false);
-            // ctx.fillStyle = 'white';
-            // ctx.fill();
-        
         }
-        
-        if (this.trail.length > 0) {
-        	let closestTrail = this.trail[this.trail.length - 1]
-        	
-            // ctx.beginPath();
-            // ctx.lineWidth = 10;
-            // ctx.strokeStyle = 'white';
-            // ctx.moveTo(closestTrail[0], closestTrail[1]);
-            // ctx.lineTo(this.x, this.y);
-            // ctx.stroke();
-            
-            // ctx.beginPath();
-            // ctx.arc(closestTrail[0], closestTrail[1], 5, 0, 2 * Math.PI, false);
-            // ctx.fillStyle = 'white';
-            // ctx.fill();
-        }
-        
-        if (this.trail.length > 1) {
-            let tail = this.trail[0]
-            let angle = getAngle(this.trail[1], tail)
-            let length = this.segmentLength - this.currentLength
-            let x = Math.cos(angle) * length + this.trail[1][0]
-            let y = Math.sin(angle) * length + this.trail[1][1]
-
-            // ctx.beginPath();
-            // ctx.lineWidth = 10;
-            // ctx.strokeStyle = 'white';
-            // ctx.moveTo(this.trail[1][0], this.trail[1][1]);
-            // ctx.lineTo(x, y);
-            // ctx.stroke();
-            
-            // ctx.beginPath();
-            // ctx.arc(x, y, 5, 0, 2 * Math.PI, false);
-            // ctx.fillStyle = 'white';
-            // ctx.fill();
-       	}
-        
     }
 
     
@@ -262,7 +311,6 @@ class Apple {
         let y = 25 + Math.random() * (canvas.height - 50)
         // let x = Math.floor(Math.random() * (canvas.width))
         // let y = Math.floor(Math.random() * (canvas.height))
-        console.log(x, y)
         new Apple(x, y)
     }
 }
@@ -317,7 +365,11 @@ function drawWindow() {
     	apples[i].draw()
     }
     
-    snake.draw()
+    if (snake.skeleton) {
+        snake.drawSkeleton()
+    } else {
+        snake.draw()
+    }
 
 }
 
