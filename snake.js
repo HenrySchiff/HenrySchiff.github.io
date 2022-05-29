@@ -367,6 +367,7 @@ function drawWindow() {
     
     if (snake.skeleton) {
         snake.drawSkeleton()
+        
     } else {
         snake.draw()
     }

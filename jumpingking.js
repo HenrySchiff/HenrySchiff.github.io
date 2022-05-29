@@ -1,7 +1,40 @@
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
+var imageCanvas = document.getElementById('imagecanvas')
+var imagectx = imageCanvas.getContext('2d')
+
 var jumpSound = new Audio('boing.mp3')
+
+
+var img = new Image();
+var dataGathered = false
+img.onload = function(){
+    console.log('load')
+    imageCanvas.width = img.width;
+    imageCanvas.height = img.height;
+    imagectx.drawImage(img, 0, 0, img.width, img.height);
+}
+img.src = 'level.png';
+
+
+const imgData = imagectx.getImageData(0, 0, imageCanvas.width, imageCanvas.height)
+const data = imgData.data
+
+console.log(data)
+
+// enumerate all pixels
+// each pixel's r,g,b,a datum are stored in separate sequential array elements
+
+for(let i = 0; i < data.length; i += 4) {
+  const red = data[i];
+  const green = data[i + 1];
+  const blue = data[i + 2];
+  const alpha = data[i + 3];
+}
+
+
+
 
 const keys = []
 
@@ -307,21 +340,7 @@ function loop() {
                 player.vx = 0.3
             }
         }
-        // if (keys.includes('a')) {
-        //     player.move(-6, 0)
-        // }
 
-        // if (keys.includes('d')) {
-        //     player.move(6, 0)
-        // }
-
-        // if (keys.includes('w')) {
-        //     player.move(0, -6)
-        // }
-
-        // if (keys.includes('s')) {
-        //     player.move(0, 6)
-        // }
 
         if (player.airborn) {
             player.fall()
@@ -346,18 +365,15 @@ function loop() {
             areaIndex += 1
             console.log('add')
         }
-        
-        console.log(player.charge)
 
+        
+        
         setFavicon();
         drawWindow();
         
-        // window.requestAnimationFrame(loop);
-    
     }, 1000 / 15);
     
   }
   
-// window.requestAnimationFrame(loop);
 
 loop()
