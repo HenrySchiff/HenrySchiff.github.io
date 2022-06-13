@@ -1,5 +1,43 @@
+const dimensions = [
+    ["o",0,120,200,120,40],["o",0,0,560,600,40],["o",0,0,0,40,560],["o",0,560,0,40,560]
+    // ["o",0,0,560,600,40]
+]
+
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
+
+
+function listToString(list) {
+    var string = '['
+    for (let i = 0; i < list.length; i++) {
+        const element = list[i]
+        element.toString()
+        string += element
+
+        if (i != list.length - 1) {
+            string += ','
+        }
+    }
+
+    string += ']'
+    return string
+}
+
+function listToString2(list) {
+    var string = ''
+    for (let i = 0; i < list.length; i++) {
+        const element = list[i]
+        element.toString()
+        string += element
+
+        if (i != list.length - 1) {
+            string += ','
+        }
+    }
+
+    return string
+}
+
 
 const keys = []
 
@@ -15,19 +53,37 @@ document.addEventListener('keydown', (event) => {
         areaIndex += 1
     }
 
+
+    if (keyName == 'e') {
+        mode = Obstacle
+    }
+
+    if (keyName == 's') {
+        mode = Slope
+    }
+
+    if (keyName == 'g') {
+        grid = !grid
+    }
+
+
+
     if (keyName == 'enter') {
-        var dimensions = []
+        var dim = []
 
         for (let i = 0; i < areas.length; i++) {
             const ar = areas[i]
             for (let e = 0; e < ar.obstacles.length; e++) {
                 const ob = ar.obstacles[e]
-                dimensions.push([ob.areaIndex, ob.x, ob.y, ob.width, ob.height])
-                
+                dim.push(['o', ob.areaIndex, ob.x, ob.y, ob.width, ob.height])
+            }
+            for (let e = 0; e < ar.slopes.length; e++) {
+                const sl = ar.slopes[e]
+                dim.push(['s', sl.areaIndex, sl.x, sl.y, sl.width, sl.height])
             }
         }
 
-        console.log(dimensions)
+        console.log(dim)
     }
 
     if (!keys.includes(keyName)) {
@@ -53,10 +109,10 @@ document.addEventListener('keyup', (event) => {
         // console.log('release')
 
         if (keys.includes('a') || keys.includes('arrowleft')) {
-            var direction = -7.5
+            var direction = -8
         } 
         else if (keys.includes('d') || keys.includes('arrowright')) {
-            var direction = 7.5
+            var direction = 8
         } else {
             var direction = 0
         }
@@ -65,6 +121,75 @@ document.addEventListener('keyup', (event) => {
     }
 
 })
+
+
+
+function getMousePos(canvas, evt) {
+    var border = 5
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left - border,
+      y: evt.clientY - rect.top - border
+    };
+}
+
+
+var obstacleStart = undefined
+
+document.addEventListener('mousedown', (event) => {
+    if (event.which == 1) {
+        obstacleStart = pointToTile(getMousePos(canvas, event))
+
+    } else if (event.which == 3) {
+        let point = pointToTile(getMousePos(canvas, event))
+        let key = [point.x, point.y]
+        let obstacle = areas[areaIndex].obstacleTiles[key]
+
+        if (obstacle) {
+            stringKey = listToString(key)
+            console.log(stringKey)
+            console.log(area0.neighborMap.keys())
+            console.log(area0.neighborMap.get(stringKey))
+            obstacle.delete()
+            areas[areaIndex].updateShading()
+        }
+    }
+})
+
+
+document.addEventListener('mouseup', (event) => {
+    if (event.which == 1) {
+        var obstacleEnd = pointToTile(getMousePos(canvas, event))
+        let width = obstacleEnd.x - obstacleStart.x + tileSize
+        let height = obstacleEnd.y - obstacleStart.y + tileSize
+
+        if (obstacleStart) {
+            new mode(areaIndex, obstacleStart.x, obstacleStart.y, width, height)
+            obstacleStart = undefined
+            areas[areaIndex].updateShading()
+        }
+    }
+})
+
+
+document.addEventListener('contextmenu', (event) => {
+    var mouse_pos = getMousePos(canvas, event)
+    
+    if (0 < mouse_pos.x && mouse_pos.x < canvas.width) {
+        if (0 < mouse_pos.y && mouse_pos.y < canvas.width) {
+            event.preventDefault()
+        }
+    }
+})
+
+
+
+const tileSize = 20
+
+function pointToTile(point) {
+    return {'x': point.x - (point.x % tileSize), 'y': point.y - (point.y % tileSize)}
+}
+
 
 
 
@@ -179,7 +304,7 @@ class Player {
                                 this.vx *= 0.5
                             }
 
-                            this.vx -= 0.3
+                            this.vx -= 0.8
                             this.vy = 1
                             this.slipping = true
                             this.y = s.y - fx * s.height - this.height
@@ -201,7 +326,7 @@ class Player {
                                 this.vx *= 0.5
                             }
 
-                            this.vx += 0.3
+                            this.vx += 0.8
                             this.vy = 1
                             this.slipping = true
                             this.y = s.y - fx * s.height - this.height
@@ -234,12 +359,91 @@ class Player {
 const areas = []
 var areaIndex = 0
 
+// const neighbors = [
+//     [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]
+// ]
+const neighbors = [
+    [1, 0], [0, 1], [-1, 0], [0, -1]
+]
+
+const tint = 'rgb(255, 96, 84)'
+const shade = 'rgb(184, 33, 22)'
+
+const borderWidth = 5
+// const shadingLegend = new Map([
+//     ['[1,0]', [false, tileSize - borderWidth, borderWidth, borderWidth, tileSize - borderWidth * 2, tint]],
+//     ['[1,1]', [true, tileSize - borderWidth, tileSize - borderWidth, borderWidth, borderWidth, shade]],
+//     ['[0,1]', [false, borderWidth, tileSize - borderWidth, tileSize - borderWidth * 2, borderWidth, shade]],
+//     ['[-1,1]', [true, 0, tileSize - borderWidth, borderWidth, borderWidth, shade]],
+//     ['[-1,0]', [false, 0, borderWidth, borderWidth, tileSize - borderWidth * 2, shade]],
+//     ['[-1,-1]', [true, 0, 0, borderWidth, borderWidth, tint]],
+//     ['[0,-1]', [false, borderWidth, 0, tileSize - borderWidth, borderWidth, tint]],
+//     ['[1,-1]', [true, tileSize - borderWidth, 0, borderWidth, borderWidth, tint]],
+// ])
+const shadingLegend = new Map([
+    ['[1,0]', [false, tileSize - borderWidth, 0, borderWidth, tileSize, tint]],
+    ['[0,1]', [false, 0, tileSize - borderWidth, tileSize, borderWidth, shade]],
+    ['[-1,0]', [false, 0, 0, borderWidth, tileSize, shade]],
+    ['[0,-1]', [false, 0, 0, tileSize, borderWidth, tint]],
+])
+
+
+
+
 class Area {
     constructor(number) {
         areas.push(this)
         this.number = number
+
         this.obstacles = []
+        this.obstacleTiles = {}
+        this.neighborMap = new Map()
         this.slopes = []
+    }
+
+    updateShading() {
+        this.neighborMap = new Map()
+        
+        for (const [key, value] of Object.entries(this.obstacleTiles)) {
+            var stringTile = "[" + key + "]"
+            var tile = JSON.parse("[" + key + "]")
+
+            this.neighborMap.set(stringTile, [])
+
+            var count = 0
+            for (let n = 0; n < neighbors.length; n++) {
+                let nOffset = neighbors[n]
+
+                let index = listToString2([tile[0] + nOffset[0] * tileSize, tile[1] + nOffset[1] * tileSize])
+
+                if (!Object.keys(this.obstacleTiles).includes(index)) {
+                    this.neighborMap.get(stringTile).push(nOffset)
+                    count += 1
+                }
+
+            console.log(stringTile, 'count ', count)
+            if (count == 0) {
+                // console.log('delete')
+            }
+
+            }
+        }
+    }
+
+    drawShading(ctx) {
+        for (const [key, value] of this.neighborMap.entries()) {
+            var tile = JSON.parse(key)
+            
+            for (let i = 0; i < value.length; i++) {
+                let index = listToString(value[i])
+                const specs = shadingLegend.get(index)
+
+                if (!specs[0])
+                    ctx.fillStyle = specs[5]
+                    ctx.fillRect(tile[0] + specs[1], tile[1] + specs[2], specs[3], specs[4]);
+
+            }
+        }
     }
 }
 
@@ -249,10 +453,26 @@ class Obstacle {
         areas[areaIndex].obstacles.push(this)
         this.areaIndex = areaIndex
 
+        for (let i = 0; i < width / tileSize; i++) {
+            for (let e = 0; e < height / tileSize; e++) {
+                areas[areaIndex].obstacleTiles[[x + i * tileSize, y + e * tileSize]] = this
+            }
+        }
+
         this.x = x
         this.y = y
         this.width = width
         this.height = height
+    }
+
+    delete() {
+        areas[this.areaIndex].obstacles.splice(areas[this.areaIndex].obstacles.indexOf(this), 1)
+
+        for (let i = 0; i < this.width / tileSize; i++) {
+            for (let e = 0; e < this.height / tileSize; e++) {
+                delete areas[areaIndex].obstacleTiles[[this.x + i * tileSize, this.y + e * tileSize]]
+            }
+        }
     }
 
     draw(ctx) {
@@ -265,51 +485,61 @@ class Obstacle {
 class Slope {
     constructor(areaIndex, x, y, width, height) {
         areas[areaIndex].slopes.push(this)
+        this.areaIndex = areaIndex
+
         this.x = x
-        this.y = y
+        this.y = y + height
         this.width = width
         this.height = height
         
         this.dir = width / Math.abs(width)
-        this.points = [[x, y], [x + width, y], [x + width, y - height]]
+        this.points = [[x, this.y], [x + width, this.y], [x + width, this.y - height]]
+
+        if (this.dir > 0) {this.lighting = shade} else {this.lighting = tint}
     }
 
     draw(ctx) {
+        ctx.lineWidth = 0
+        ctx.fillStyle = 'red'
         ctx.beginPath()
         ctx.moveTo(this.points[0][0], this.points[0][1])
         ctx.lineTo(this.points[1][0], this.points[1][1])
         ctx.lineTo(this.points[2][0], this.points[2][1])
         ctx.lineTo(this.points[0][0], this.points[0][1])
         ctx.fill()
+        
+        ctx.lineWidth = borderWidth
+        ctx.strokeStyle = this.lighting
+        ctx.beginPath()
+        ctx.moveTo(this.points[0][0], this.points[0][1])
+        ctx.lineTo(this.points[2][0], this.points[2][1])
+        ctx.stroke()
     }
 }
 
 
 
 
-
+var mode = Obstacle
+var grid = false
 
 const player = new Player(100, 400)
 
-new Area(0)
+let area0 = new Area(0)
 new Area(1)
 new Area(2)
 
-// new Obstacle(0, 300, 300, 100, 100)
-new Obstacle(0, 100, 200, 100, 30)
-// new Obstacle(0, 300, 470, 100, 100)
+for (let i = 0; i < dimensions.length; i++) {
+    const array = dimensions[i]
+    if (array[0] == 'o') {
+        new Obstacle(array[1], array[2], array[3], array[4], array[5])
+    } else if (array[0] == 's') {
+        new Slope(array[1], array[2], array[3], array[4], array[5])
+    }
+    
+}
 
-new Slope(0, 200, 470, -100, 100)
-new Slope(0, 300, 470, 100, 100)
-
-new Obstacle(0, 0, 570, 600, 30)
-new Obstacle(0, 0, 0, 30, 570)
-new Obstacle(0, 570, 0, 30, 570)
-
-
-new Obstacle(1, 0, 0, 30, 600)
-new Obstacle(1, 570, 0, 30, 600)
-new Obstacle(1, 500, 570, 70, 30)
+area0.updateShading()
 
 
 function drawWindow() {
@@ -328,6 +558,24 @@ function drawWindow() {
         areas[areaIndex].slopes[i].draw(ctx)
     }
 
+    areas[areaIndex].drawShading(ctx)
+
+    if (grid) {
+        ctx.strokeStyle = 'white'
+        for (let w = 0; w < canvas.width / tileSize; w++) {
+            ctx.beginPath()
+            ctx.moveTo(w * tileSize, 0)
+            ctx.lineTo(w * tileSize, canvas.height)
+            ctx.stroke()
+        }
+
+        for (let h = 0; h < canvas.height / tileSize; h++) {
+            ctx.beginPath()
+            ctx.moveTo(0, h * tileSize)
+            ctx.lineTo(canvas.width, h * tileSize)
+            ctx.stroke()
+        }
+    }
 }
 
 
@@ -387,7 +635,7 @@ function loop() {
         areaIndex += 1
     }
     
-    console.log(player.vx, player.airborn)
+    // console.log(player.vx, player.airborn)
 
     drawWindow();
     
