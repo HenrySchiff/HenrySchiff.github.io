@@ -1,11 +1,51 @@
-const dimensions = [
-    ["o",0,120,200,120,40],["o",0,0,560,600,40],["o",0,0,0,40,560],["o",0,560,0,40,560]
-    // ["o",0,0,560,600,40]
-]
+const dimensions = [["o",0,120,200,120,40,[255,0,0]],["o",0,0,560,600,40,[255,0,0]],["o",0,0,0,40,560,[255,0,0]],["o",0,560,0,40,560,[255,0,0]],["o",0,380,-100,20,20,[255,0,0]],["s",0,1100,-20,20,20,[255,203,31]],["s",0,300,160,180,140,[147,27,191]]]
+
+
 
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
+
+var colorIndex = 0
+var colors = [
+    [255, 0, 0],
+    [219, 129, 20],
+    [255, 203, 31],
+    [23, 173, 38],
+    [0, 0, 255],
+    [147, 27, 191]
+]
+
+
+function getTint(color, amount) {
+    var tint = [...color]
+
+    for (let i = 0; i < tint.length; i++) {
+        if (tint[i] <= amount) {
+            tint[i] += amount
+        } else {
+            tint[i] = 255
+        }
+    }
+
+    return 'rgb(' + tint[0] + ',' + tint[1] + ',' + tint[2] + ')' 
+
+} 
+
+function getShade(color, amount) {
+    var shade = [...color]
+
+    for (let i = 0; i < shade.length; i++) {
+        if (shade[i] >= amount) {
+            shade[i] -= amount
+        } else {
+            shade[i] = 0
+        }
+    }
+
+    return 'rgb(' + shade[0] + ',' + shade[1] + ',' + shade[2] + ')' 
+
+} 
 
 function listToString(list) {
     var string = '['
@@ -75,11 +115,11 @@ document.addEventListener('keydown', (event) => {
             const ar = areas[i]
             for (let e = 0; e < ar.obstacles.length; e++) {
                 const ob = ar.obstacles[e]
-                dim.push(['o', ob.areaIndex, ob.x, ob.y, ob.width, ob.height])
+                dim.push(['o', ob.areaIndex, ob.x, ob.y, ob.width, ob.height, ob.rawColor])
             }
             for (let e = 0; e < ar.slopes.length; e++) {
                 const sl = ar.slopes[e]
-                dim.push(['s', sl.areaIndex, sl.x, sl.y, sl.width, sl.height])
+                dim.push(['s', sl.areaIndex, sl.x, sl.y - sl.height, sl.width, sl.height, sl.rawColor])
             }
         }
 
@@ -144,13 +184,17 @@ document.addEventListener('mousedown', (event) => {
         let point = pointToTile(getMousePos(canvas, event))
         let key = [point.x, point.y]
         let obstacle = areas[areaIndex].obstacleTiles[key]
+        let slope = areas[areaIndex].slopeTiles[key]
 
         if (obstacle) {
-            stringKey = listToString(key)
-            console.log(stringKey)
-            console.log(area0.neighborMap.keys())
-            console.log(area0.neighborMap.get(stringKey))
+            // stringKey = listToString(key)
+            // console.log(stringKey)
+            // console.log(area0.neighborMap.keys())
+            // console.log(area0.neighborMap.get(stringKey))
             obstacle.delete()
+            areas[areaIndex].updateShading()
+        } else if (slope) {
+            slope.delete()
             areas[areaIndex].updateShading()
         }
     }
@@ -163,12 +207,22 @@ document.addEventListener('mouseup', (event) => {
         let width = obstacleEnd.x - obstacleStart.x + tileSize
         let height = obstacleEnd.y - obstacleStart.y + tileSize
 
+        // if (mode == Slope) {height = -width}s
+
         if (obstacleStart) {
-            new mode(areaIndex, obstacleStart.x, obstacleStart.y, width, height)
+            new mode(areaIndex, obstacleStart.x, obstacleStart.y, width, height, colors[colorIndex])
             obstacleStart = undefined
             areas[areaIndex].updateShading()
         }
     }
+})
+
+
+document.addEventListener('wheel', (event) => {
+    colorIndex += event.deltaY / Math.abs(event.deltaY)
+    colorIndex %= colors.length
+    if (colorIndex < 0) {colorIndex = colors.length - 1}
+    console.log(colorIndex)
 })
 
 
@@ -369,22 +423,12 @@ const neighbors = [
 const tint = 'rgb(255, 96, 84)'
 const shade = 'rgb(184, 33, 22)'
 
-const borderWidth = 5
-// const shadingLegend = new Map([
-//     ['[1,0]', [false, tileSize - borderWidth, borderWidth, borderWidth, tileSize - borderWidth * 2, tint]],
-//     ['[1,1]', [true, tileSize - borderWidth, tileSize - borderWidth, borderWidth, borderWidth, shade]],
-//     ['[0,1]', [false, borderWidth, tileSize - borderWidth, tileSize - borderWidth * 2, borderWidth, shade]],
-//     ['[-1,1]', [true, 0, tileSize - borderWidth, borderWidth, borderWidth, shade]],
-//     ['[-1,0]', [false, 0, borderWidth, borderWidth, tileSize - borderWidth * 2, shade]],
-//     ['[-1,-1]', [true, 0, 0, borderWidth, borderWidth, tint]],
-//     ['[0,-1]', [false, borderWidth, 0, tileSize - borderWidth, borderWidth, tint]],
-//     ['[1,-1]', [true, tileSize - borderWidth, 0, borderWidth, borderWidth, tint]],
-// ])
+const borderWidth = 6
 const shadingLegend = new Map([
-    ['[1,0]', [false, tileSize - borderWidth, 0, borderWidth, tileSize, tint]],
-    ['[0,1]', [false, 0, tileSize - borderWidth, tileSize, borderWidth, shade]],
-    ['[-1,0]', [false, 0, 0, borderWidth, tileSize, shade]],
-    ['[0,-1]', [false, 0, 0, tileSize, borderWidth, tint]],
+    ['[1,0]', [false, tileSize - borderWidth, 0, borderWidth, tileSize, 'tint']],
+    ['[0,1]', [false, 0, tileSize - borderWidth, tileSize, borderWidth, 'shade']],
+    ['[-1,0]', [false, 0, 0, borderWidth, tileSize, 'shade']],
+    ['[0,-1]', [false, 0, 0, tileSize, borderWidth, 'tint']],
 ])
 
 
@@ -397,8 +441,9 @@ class Area {
 
         this.obstacles = []
         this.obstacleTiles = {}
-        this.neighborMap = new Map()
         this.slopes = []
+        this.slopeTiles = {}
+        this.neighborMap = new Map()
     }
 
     updateShading() {
@@ -408,7 +453,7 @@ class Area {
             var stringTile = "[" + key + "]"
             var tile = JSON.parse("[" + key + "]")
 
-            this.neighborMap.set(stringTile, [])
+            this.neighborMap.set(stringTile, [value.color, value.tint, value.shade])
 
             var count = 0
             for (let n = 0; n < neighbors.length; n++) {
@@ -416,12 +461,12 @@ class Area {
 
                 let index = listToString2([tile[0] + nOffset[0] * tileSize, tile[1] + nOffset[1] * tileSize])
 
-                if (!Object.keys(this.obstacleTiles).includes(index)) {
+                if (!Object.keys(this.obstacleTiles).includes(index) && !Object.keys(this.slopeTiles).includes(index)) {
                     this.neighborMap.get(stringTile).push(nOffset)
                     count += 1
                 }
 
-            console.log(stringTile, 'count ', count)
+            // console.log(stringTile, 'count ', count)
             if (count == 0) {
                 // console.log('delete')
             }
@@ -434,35 +479,66 @@ class Area {
         for (const [key, value] of this.neighborMap.entries()) {
             var tile = JSON.parse(key)
             
-            for (let i = 0; i < value.length; i++) {
+            for (let i = 3; i < value.length; i++) {
                 let index = listToString(value[i])
                 const specs = shadingLegend.get(index)
 
+                if (specs[5] == 'tint') {var color = value[1]} else if (specs[5] == 'shade') {var color = value[2]}
+
                 if (!specs[0])
-                    ctx.fillStyle = specs[5]
+                    ctx.fillStyle = color
                     ctx.fillRect(tile[0] + specs[1], tile[1] + specs[2], specs[3], specs[4]);
 
             }
         }
+
+        // for (const [key, value] of Object.entries(this.slopeTiles)) {
+        //     // console.log(key)
+        //     var tile = JSON.parse("[" + key + "]")
+
+        //     ctx.fillStyle = 'blue'
+        //     ctx.fillRect(tile[0], tile[1], tileSize, tileSize)
+        // }
     }
 }
 
 
 class Obstacle {
-    constructor(areaIndex, x, y, width, height) {
-        areas[areaIndex].obstacles.push(this)
-        this.areaIndex = areaIndex
+    constructor(areaIndex, x, y, width, height, color) {
 
+        if (width < 0) {return}
+        
+        var toAdd = []
         for (let i = 0; i < width / tileSize; i++) {
             for (let e = 0; e < height / tileSize; e++) {
-                areas[areaIndex].obstacleTiles[[x + i * tileSize, y + e * tileSize]] = this
+                let tile = [x + i * tileSize, y + e * tileSize]
+                let strTile = listToString2(tile)
+
+                // if new obstacle overlaps with existing ones, cancel
+                if (Object.keys(areas[areaIndex].obstacleTiles).includes(strTile)) {
+                    return
+                } 
+
+                toAdd.push(tile)
             }
         }
+
+        for (let i = 0; i < toAdd.length; i++) {
+            areas[areaIndex].obstacleTiles[toAdd[i]] = this
+        }
+        
+        areas[areaIndex].obstacles.push(this)
+        this.areaIndex = areaIndex
 
         this.x = x
         this.y = y
         this.width = width
         this.height = height
+
+        this.rawColor = color
+        this.color = 'rgba(' + color[0].toString() + ',' + color[1].toString() + ',' + color[2].toString() + ')'
+        this.tint = getTint(color, 90)
+        this.shade = getShade(color, 90)
     }
 
     delete() {
@@ -477,30 +553,56 @@ class Obstacle {
 
     draw(ctx) {
         ctx.beginPath();
-        ctx.fillStyle = 'red'
+        ctx.fillStyle = this.color
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 }
 
 class Slope {
-    constructor(areaIndex, x, y, width, height) {
+    constructor(areaIndex, x, y, width, height, color) {
         areas[areaIndex].slopes.push(this)
         this.areaIndex = areaIndex
+
+        this.dir = width / Math.abs(width)
+        if (this.dir < 0) {var addend = -tileSize} else {var addend = 0}
+
+        for (let i = 0; i < Math.abs(width) / tileSize; i++) {
+            for (let e = height / tileSize - i - 1; e < height / tileSize; e++) {
+                areas[areaIndex].slopeTiles[[x + i * tileSize * this.dir + addend, y + e * tileSize]] = this
+            }
+        }
 
         this.x = x
         this.y = y + height
         this.width = width
         this.height = height
+
+        this.rawColor = color
+        this.color = 'rgba(' + color[0].toString() + ',' + color[1].toString() + ',' + color[2].toString() + ')'
+        this.tint = getTint(color, 90)
+        this.shade = getShade(color, 90)
         
-        this.dir = width / Math.abs(width)
         this.points = [[x, this.y], [x + width, this.y], [x + width, this.y - height]]
 
-        if (this.dir > 0) {this.lighting = shade} else {this.lighting = tint}
+        if (this.dir > 0) {this.lighting = this.shade} else {this.lighting = this.tint}
+    }
+
+    delete() {
+        areas[this.areaIndex].slopes.splice(areas[this.areaIndex].slopes.indexOf(this), 1)
+
+        if (this.dir < 0) {var addend = -tileSize} else {var addend = 0}
+
+        for (let i = 0; i < Math.abs(this.width) / tileSize; i++) {
+            for (let e = this.height / tileSize - i - 1; e < this.height / tileSize; e++) {
+                delete areas[areaIndex].slopeTiles[[this.x + i * tileSize * this.dir + addend, 
+                                                    this.y - this.height + e * tileSize]]
+            }
+        }
     }
 
     draw(ctx) {
         ctx.lineWidth = 0
-        ctx.fillStyle = 'red'
+        ctx.fillStyle = this.color
         ctx.beginPath()
         ctx.moveTo(this.points[0][0], this.points[0][1])
         ctx.lineTo(this.points[1][0], this.points[1][1])
@@ -514,6 +616,11 @@ class Slope {
         ctx.moveTo(this.points[0][0], this.points[0][1])
         ctx.lineTo(this.points[2][0], this.points[2][1])
         ctx.stroke()
+
+        // ctx.fillStyle = 'white'
+        // ctx.beginPath();
+        // ctx.arc(this.x, this.y, 3, 0, 2 * Math.PI);
+        // ctx.fill();
     }
 }
 
@@ -532,9 +639,9 @@ new Area(2)
 for (let i = 0; i < dimensions.length; i++) {
     const array = dimensions[i]
     if (array[0] == 'o') {
-        new Obstacle(array[1], array[2], array[3], array[4], array[5])
+        new Obstacle(array[1], array[2], array[3], array[4], array[5], array[6])
     } else if (array[0] == 's') {
-        new Slope(array[1], array[2], array[3], array[4], array[5])
+        new Slope(array[1], array[2], array[3], array[4], array[5], array[6])
     }
     
 }
@@ -562,6 +669,7 @@ function drawWindow() {
 
     if (grid) {
         ctx.strokeStyle = 'white'
+        ctx.lineWidth = 1
         for (let w = 0; w < canvas.width / tileSize; w++) {
             ctx.beginPath()
             ctx.moveTo(w * tileSize, 0)
