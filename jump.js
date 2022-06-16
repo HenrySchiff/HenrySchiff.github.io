@@ -85,11 +85,11 @@ document.addEventListener('keydown', (event) => {
     const keyName = event.key.toLowerCase();
     console.log(keyName)
 
-    if (keyName == 'arrowdown') {
+    if (keyName == 'arrowdown' && areaIndex != 0) {
         areaIndex -= 1
     }
     
-    if (keyName == 'arrowup') {
+    if (keyName == 'arrowup' && areaIndex != areas.length - 1) {
         areaIndex += 1
     }
 
@@ -178,7 +178,11 @@ var obstacleStart = undefined
 
 document.addEventListener('mousedown', (event) => {
     if (event.which == 1) {
-        obstacleStart = pointToTile(getMousePos(canvas, event))
+        let mouse = getMousePos(canvas, event)
+
+        if (mouse.x < canvas.width && mouse.x > 0 && mouse.y < canvas.height && mouse.y > 0) {
+            obstacleStart = pointToTile(mouse)
+        }
 
     } else if (event.which == 3) {
         let point = pointToTile(getMousePos(canvas, event))
@@ -203,13 +207,13 @@ document.addEventListener('mousedown', (event) => {
 
 document.addEventListener('mouseup', (event) => {
     if (event.which == 1) {
-        var obstacleEnd = pointToTile(getMousePos(canvas, event))
-        let width = obstacleEnd.x - obstacleStart.x + tileSize
-        let height = obstacleEnd.y - obstacleStart.y + tileSize
+        let mouse = getMousePos(canvas, event)
+        
+        if (obstacleStart && mouse.x < canvas.width && mouse.x > 0 && mouse.y < canvas.height && mouse.y > 0) {
+            var obstacleEnd = pointToTile(getMousePos(canvas, event))
+            let width = obstacleEnd.x - obstacleStart.x + tileSize
+            let height = obstacleEnd.y - obstacleStart.y + tileSize
 
-        // if (mode == Slope) {height = -width}s
-
-        if (obstacleStart) {
             new mode(areaIndex, obstacleStart.x, obstacleStart.y, width, height, colors[colorIndex])
             obstacleStart = undefined
             areas[areaIndex].updateShading()
@@ -265,7 +269,7 @@ class Player {
 
     chargeJump() {
         if (this.charge < this.maxCharge) {
-            this.charge += 1
+            this.charge += 1.35
         } else {
             this.charge = this.maxCharge
 
@@ -417,18 +421,22 @@ var areaIndex = 0
 //     [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]
 // ]
 const neighbors = [
-    [1, 0], [0, 1], [-1, 0], [0, -1]
+    [1, 0], [0, 1], [-1, 0], [0, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]
 ]
 
 const tint = 'rgb(255, 96, 84)'
 const shade = 'rgb(184, 33, 22)'
 
-const borderWidth = 6
+const borderWidth = 5
 const shadingLegend = new Map([
     ['[1,0]', [false, tileSize - borderWidth, 0, borderWidth, tileSize, 'tint']],
     ['[0,1]', [false, 0, tileSize - borderWidth, tileSize, borderWidth, 'shade']],
     ['[-1,0]', [false, 0, 0, borderWidth, tileSize, 'shade']],
     ['[0,-1]', [false, 0, 0, tileSize, borderWidth, 'tint']],
+    ['[1,-1]', [false, tileSize - borderWidth, 0, borderWidth, borderWidth, 'tint']],
+    ['[1,1]', [false, tileSize - borderWidth, tileSize - borderWidth, borderWidth, borderWidth, 'shade']],
+    ['[-1,1]', [false, 0, tileSize - borderWidth, borderWidth, borderWidth, 'shade']],
+    ['[-1,-1]', [false, 0, 0, borderWidth, borderWidth, 'tint']]
 ])
 
 
@@ -461,15 +469,33 @@ class Area {
 
                 let index = listToString2([tile[0] + nOffset[0] * tileSize, tile[1] + nOffset[1] * tileSize])
 
-                if (!Object.keys(this.obstacleTiles).includes(index) && !Object.keys(this.slopeTiles).includes(index)) {
-                    this.neighborMap.get(stringTile).push(nOffset)
-                    count += 1
+                if (nOffset.includes(0)) {
+                    if (!Object.keys(this.obstacleTiles).includes(index) && !Object.keys(this.slopeTiles).includes(index)) {
+                        this.neighborMap.get(stringTile).push(nOffset)
+                        count += 1                    }
+                } else {
+                    // let adj1 = listToString2([tile[0] + nOffset[0] * tileSize, tile[1]])
+                    // let adj2 = listToString2([tile[0], tile[1] + nOffset[1] * tileSize])
+
+                    let adjacents = [
+                        listToString2([tile[0] + nOffset[0] * tileSize, tile[1]]),
+                        listToString2([tile[0], tile[1] + nOffset[1] * tileSize])
+                    ]
+
+
+                    if (!Object.keys(this.obstacleTiles).includes(index) && 
+                        !Object.keys(this.slopeTiles).includes(index) && 
+                        // adjacents.every(value => {Object.keys(this.obstacleTiles).includes(value)})) {
+                        Object.keys(this.obstacleTiles).includes(adjacents[0]) &&
+                        Object.keys(this.obstacleTiles).includes(adjacents[1])) {
+                            this.neighborMap.get(stringTile).push(nOffset)
+                        }
                 }
 
             // console.log(stringTile, 'count ', count)
-            if (count == 0) {
+            // if (count == 0) {
                 // console.log('delete')
-            }
+            // }
 
             }
         }
@@ -483,6 +509,7 @@ class Area {
                 let index = listToString(value[i])
                 const specs = shadingLegend.get(index)
 
+                // console.log(index)
                 if (specs[5] == 'tint') {var color = value[1]} else if (specs[5] == 'shade') {var color = value[2]}
 
                 if (!specs[0])
@@ -492,7 +519,7 @@ class Area {
             }
         }
 
-        // for (const [key, value] of Object.entries(this.slopeTiles)) {
+        // for (const [key, value] of Object.entries(this.obstacleTiles)) {
         //     // console.log(key)
         //     var tile = JSON.parse("[" + key + "]")
 
@@ -505,13 +532,23 @@ class Area {
 
 class Obstacle {
     constructor(areaIndex, x, y, width, height, color) {
-
-        if (width < 0) {return}
         
+        this.x = x
+        this.y = y
+        
+        // changing attributes if width or height input is negative
+        var xAddend = 0; var yAddend = 0
+        if (width <= 0) {this.x += width - tileSize; xAddend = tileSize * 2}
+        if (height <= 0) {this.y += height - tileSize; yAddend = tileSize * 2}
+
+        this.width = Math.abs(width) + xAddend
+        this.height = Math.abs(height) + yAddend
+        
+
         var toAdd = []
-        for (let i = 0; i < width / tileSize; i++) {
-            for (let e = 0; e < height / tileSize; e++) {
-                let tile = [x + i * tileSize, y + e * tileSize]
+        for (let i = 0; i < this.width / tileSize; i++) {
+            for (let e = 0; e < this.height / tileSize; e++) {
+                let tile = [this.x + i * tileSize, this.y + e * tileSize]
                 let strTile = listToString2(tile)
 
                 // if new obstacle overlaps with existing ones, cancel
@@ -529,11 +566,6 @@ class Obstacle {
         
         areas[areaIndex].obstacles.push(this)
         this.areaIndex = areaIndex
-
-        this.x = x
-        this.y = y
-        this.width = width
-        this.height = height
 
         this.rawColor = color
         this.color = 'rgba(' + color[0].toString() + ',' + color[1].toString() + ',' + color[2].toString() + ')'
@@ -684,6 +716,11 @@ function drawWindow() {
             ctx.stroke()
         }
     }
+
+    
+    ctx.font = '30px arial'
+    ctx.fillStyle = 'white'
+    ctx.fillText(areaIndex, 10, 30)
 }
 
 
