@@ -93,12 +93,14 @@ document.addEventListener('keydown', (event) => {
     const keyName = event.key.toLowerCase();
     console.log(keyName)
 
-    if (keyName == 'arrowdown' && areaIndex != 0) {
-        areaIndex -= 1
-    }
-    
-    if (keyName == 'arrowup' && areaIndex != areas.length - 1) {
-        areaIndex += 1
+    if (devMode) {
+        if (keyName == 'arrowdown' && areaIndex != 0) {
+            areaIndex -= 1
+        }
+        
+        if (keyName == 'arrowup' && areaIndex != areas.length - 1) {
+            areaIndex += 1
+        }
     }
 
 
@@ -755,67 +757,73 @@ function drawWindow() {
 
 
 function loop() {
+    
+    window.setInterval(function() {
 
-    if (!player.airborn && player.charge == 0) {
-        player.vx = 0
+        if (!player.airborn && player.charge == 0) {
+            player.vx = 0
 
-        if (keys.includes('a') || keys.includes('arrowleft') && player.charge == 0) {
-            player.airborn = true
-            player.move(-4, 0)
-            player.vx = -3.5
+            if (keys.includes('a') || keys.includes('arrowleft') && player.charge == 0) {
+                player.airborn = true
+                player.move(-4, 0)
+                player.vx = -3.5
+            }
+
+            if (keys.includes('d') || keys.includes('arrowright') && player.charge == 0) {
+                player.airborn = true
+                player.move(4, 0)
+                player.vx = 3.5
+            }
         }
 
-        if (keys.includes('d') || keys.includes('arrowright') && player.charge == 0) {
-            player.airborn = true
-            player.move(4, 0)
-            player.vx = 3.5
+
+        if (keys.includes('j')) {
+            player.move(-1, 0)
         }
-    }
+        if (keys.includes('l')) {
+            player.move(1, 0)
+        }
+        if (keys.includes('k')) {
+            player.move(0, 1)
+        }
+        if (keys.includes('i')) {
+            player.move(0, -1)
+        }
 
 
-    if (keys.includes('j')) {
-        player.move(-1, 0)
-    }
-    if (keys.includes('l')) {
-        player.move(1, 0)
-    }
-    if (keys.includes('k')) {
-        player.move(0, 1)
-    }
-    if (keys.includes('i')) {
-        player.move(0, -1)
-    }
+        // if (player.slipping) {
+        //     player.vx -= 0.3
+        // }
+
+        if (player.airborn) {
+            player.fall()
+        }
+
+        if (keys.includes(' ') && !player.airborn) {
+            player.chargeJump()
+        }
 
 
-    // if (player.slipping) {
-    //     player.vx -= 0.3
-    // }
+        if (player.y > 600) {
+            player.y -= 600
+            areaIndex -= 1
+        }
+        
+        if (player.y < 0) {
+            player.y += 600
+            areaIndex += 1
+        }
+        
+        // console.log(player.vx, player.airborn)
 
-    if (player.airborn) {
-        player.fall()
-    }
+        drawWindow();
+        
+        // window.requestAnimationFrame(loop);
 
-    if (keys.includes(' ') && !player.airborn) {
-        player.chargeJump()
-    }
+    }, 1000 / 60);
 
-
-    if (player.y > 600) {
-        player.y -= 600
-        areaIndex -= 1
-    }
-    
-    if (player.y < 0) {
-        player.y += 600
-        areaIndex += 1
-    }
-    
-    // console.log(player.vx, player.airborn)
-
-    drawWindow();
-    
-    window.requestAnimationFrame(loop);
-    
-  }
+}
   
-window.requestAnimationFrame(loop);
+loop()
+
+// window.requestAnimationFrame(loop);
