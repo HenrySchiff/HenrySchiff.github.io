@@ -776,18 +776,19 @@ function loop() {
             }
         }
 
-
-        if (keys.includes('j')) {
-            player.move(-1, 0)
-        }
-        if (keys.includes('l')) {
-            player.move(1, 0)
-        }
-        if (keys.includes('k')) {
-            player.move(0, 1)
-        }
-        if (keys.includes('i')) {
-            player.move(0, -1)
+        if (devMode) {
+            if (keys.includes('j')) {
+                player.move(-1, 0)
+            }
+            if (keys.includes('l')) {
+                player.move(1, 0)
+            }
+            if (keys.includes('k')) {
+                player.move(0, 1)
+            }
+            if (keys.includes('i')) {
+                player.move(0, -1)
+            }
         }
 
 
