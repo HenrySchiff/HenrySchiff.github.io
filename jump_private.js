@@ -3,7 +3,7 @@ const dimensions = [["o",0,0,0,40,560,[255,0,0]],["o",0,380,-100,20,20,[255,0,0]
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 
-var devMode = false
+var devMode = true
 
 
 var colorIndex = 0
@@ -545,8 +545,7 @@ class Area {
             }
         }
 
-        // for (const [key, value] of Object.entries(this.obstacleTiles)) {
-        //     // console.log(key)
+        // for (const [key, value] of Object.entries(this.slopeTiles)) {
         //     var tile = JSON.parse("[" + key + "]")
 
         //     ctx.fillStyle = 'blue'
@@ -569,6 +568,12 @@ class Obstacle {
 
         this.width = Math.abs(width) + xAddend
         this.height = Math.abs(height) + yAddend
+
+        // changing attributes if obstacles is on edge of screen
+        if (this.x == 0) {this.x -= tileSize; this.width += tileSize}
+        if (this.x + this.width == canvas.width) {this.width += tileSize}
+        if (this.y == 0) {this.y -= tileSize; this.height += tileSize}
+        if (this.y + this.height == canvas.height) {this.height += tileSize}
         
 
         var toAdd = []
